@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Main script initialized');
     // Scroll Reveal Observer
     const reveals = document.querySelectorAll('.reveal');
 
