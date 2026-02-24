@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://udonair.github.io/nakamura_violin_school/sitemap.xml
