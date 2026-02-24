@@ -273,6 +273,44 @@ ul {
 }
 
 /* ==============================
+   MOBILE TOGGLE
+   ============================== */
+.mobile-nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  z-index: 1000;
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+
+.mobile-nav-toggle span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--charcoal);
+  margin: 5px auto;
+  transition: all 0.3s var(--ease-soft);
+  border-radius: 2px;
+}
+
+.mobile-nav-toggle.active span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.mobile-nav-toggle.active span:nth-child(2) {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.mobile-nav-toggle.active span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ==============================
    HERO — Standard Horizontal (Balanced)
    ============================== */
 .hero {
@@ -1301,8 +1339,47 @@ ul {
   }
 
   .nav-list {
-    display: none;
-    /* In real app, would need a hamburger menu */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    height: 100%;
+  }
+
+  .nav-list a {
+    font-size: 1.4rem;
+    font-weight: 500;
+  }
+
+  .header {
+    padding: 12px 0;
+  }
+
+  .mobile-nav-toggle {
+    display: block;
+  }
+
+  nav {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    height: 100vh;
+    background: rgba(253, 252, 251, 0.98);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    z-index: 900;
+    transition: right 0.5s var(--ease-soft);
+    padding: 80px 24px;
+  }
+
+  nav.active {
+    right: 0;
+  }
+
+  .header .container {
+    padding: 0 16px;
   }
 
   /* Fix Course Item Grid on smaller screens */
@@ -1667,10 +1744,11 @@ ul {
 }
 
 .instructor-name small {
+  display: block;
   font-size: 0.9rem;
   font-weight: 400;
   color: var(--charcoal-light);
-  margin-left: 10px;
+  margin-top: 4px;
   letter-spacing: 0.1em;
 }
 

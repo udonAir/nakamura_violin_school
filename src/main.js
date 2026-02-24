@@ -50,4 +50,28 @@ document.addEventListener('DOMContentLoaded', () => {
     setupModal('open-violin-modal', 'violin-modal');
     setupModal('open-piano-modal', 'piano-modal');
     setupModal('open-rhythmic-modal', 'rhythmic-modal');
+
+    // Mobile Navigation Toggle
+    const navToggle = document.querySelector('.mobile-nav-toggle');
+    const mainNav = document.getElementById('main-nav');
+    const navLinks = document.querySelectorAll('.nav-list a');
+
+    if (navToggle && mainNav) {
+        navToggle.addEventListener('click', () => {
+            const isActive = mainNav.classList.toggle('active');
+            navToggle.classList.toggle('active');
+            navToggle.setAttribute('aria-expanded', isActive);
+            document.body.style.overflow = isActive ? 'hidden' : '';
+        });
+
+        // Close menu when a link is clicked
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mainNav.classList.remove('active');
+                navToggle.classList.remove('active');
+                navToggle.setAttribute('aria-expanded', 'false');
+                document.body.style.overflow = '';
+            });
+        });
+    }
 });
