@@ -1288,53 +1288,50 @@ ul {
   }
 
   .hero {
-    padding: 20px 0 40px;
+    padding: 10px 0 30px;
     min-height: auto;
   }
 
   .hero-grid {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 10px;
     text-align: center;
   }
 
   .hero-text-side {
     text-align: center;
-    /* Center align on mobile */
     order: 2;
-    /* Put text below image on mobile (optional, or keep on top) */
-  }
-
-  /* Optional: swap order if you want image first on mobile
-  .hero-grid {
-    grid-template-areas: "image" "text";
-  }
-  */
-
-  .hero-text-side {
     align-items: center;
     display: flex;
     flex-direction: column;
   }
 
-  .hero-title {
-    font-size: 1.5rem;
-    /* 1remから修正 */
-    text-align: center;
-    margin-bottom: 16px;
+  .hero-badge-clean {
+    margin-bottom: 12px;
+    font-size: 0.75rem;
   }
 
-  /* Remove old vertical-copy styles as they are no longer used */
+  .hero-title {
+    font-size: 1.4rem;
+    margin-bottom: 12px;
+  }
 
   .hero-sub {
-    font-size: 0.95rem;
-    margin-bottom: 24px;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    line-height: 1.7;
   }
 
   .hero-image-side {
-    height: 300px;
+    height: auto;
+    max-height: 280px;
     width: 100%;
-    margin-bottom: 10px;
+    margin-bottom: 0px;
+    order: 1;
+  }
+
+  .hero-image-frame {
+    aspect-ratio: 16 / 9;
   }
 
   .hero-image-frame {
