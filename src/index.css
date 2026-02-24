@@ -1283,6 +1283,10 @@ ul {
    RESPONSIVE
    ============================== */
 @media (max-width: 960px) {
+  html {
+    scroll-padding-top: 110px;
+  }
+
   .u-nowrap {
     white-space: normal;
     /* Allow wrapping on smaller screens */
