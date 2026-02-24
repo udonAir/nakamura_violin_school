@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Watercolor Wash -->
+  <path d="M20 40 Q40 20 60 30 Q80 20 90 40 Q95 60 80 80 Q50 90 20 80 Q10 60 20 40Z" fill="#e1bee7" opacity="0.3"/>
+
+  <!-- Figure 1 -->
+  <circle cx="30" cy="45" r="5" stroke="#5d4037" stroke-width="0.8" fill="none"/>
+  <path d="M30 50 Q25 60 25 70" stroke="#5d4037" stroke-width="0.8" fill="none"/>
+  
+  <!-- Figure 2 -->
+  <circle cx="50" cy="40" r="5" stroke="#5d4037" stroke-width="0.8" fill="none"/>
+  <path d="M50 45 Q45 55 45 70" stroke="#5d4037" stroke-width="0.8" fill="none"/>
+  
+  <!-- Figure 3 -->
+  <circle cx="70" cy="45" r="5" stroke="#5d4037" stroke-width="0.8" fill="none"/>
+  <path d="M70 50 Q75 60 75 70" stroke="#5d4037" stroke-width="0.8" fill="none"/>
+  
+  <!-- Connection Arc -->
+  <path d="M30 35 Q50 25 70 35" stroke="#5d4037" stroke-width="0.6" fill="none" stroke-dasharray="2 2"/>
+  
+  <!-- Notes -->
+  <path d="M50 25 L50 15 M50 25 L55 20" stroke="#5d4037" stroke-width="0.6" fill="none"/>
+  <circle cx="50" cy="25" r="1.5" fill="#5d4037"/>
+</svg>
