@@ -1,9 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <rect width="64" height="64" rx="14" fill="#928c36"/>
-  <!-- Note head -->
-  <ellipse cx="20" cy="51" rx="12" ry="9" fill="#fdfcfb" transform="rotate(-25 20 51)"/>
-  <!-- Stem -->
-  <rect x="30" y="12" width="4" height="41" rx="2" fill="#fdfcfb"/>
-  <!-- Flag -->
-  <path d="M34 12 C52 18,52 38,34 42 C48 35,48 20,34 12Z" fill="#fdfcfb"/>
+  <g transform="translate(10, 10) scale(0.72)">
+    <!-- Note head -->
+    <ellipse cx="20" cy="51" rx="12" ry="9" fill="#fdfcfb" transform="rotate(-25 20 51)"/>
+    <!-- Stem -->
+    <rect x="30" y="12" width="4" height="41" rx="2" fill="#fdfcfb"/>
+    <!-- Flag -->
+    <path d="M34 12 C52 18,52 38,34 42 C48 35,48 20,34 12Z" fill="#fdfcfb"/>
+  </g>
 </svg>
