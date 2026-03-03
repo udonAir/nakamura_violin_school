@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Main script initialized');
     // Scroll Reveal Observer
     const reveals = document.querySelectorAll('.reveal');
 
@@ -12,8 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('visible');
-                // Optional: Stop observing once revealed
-                // observer.unobserve(entry.target);
+                observer.unobserve(entry.target);
             }
         });
     }, observerOptions);
@@ -57,12 +55,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const mainNav = document.getElementById('main-nav');
     const navLinks = document.querySelectorAll('.nav-list a');
 
-    console.log('Toggle element:', navToggle);
-    console.log('Nav element:', mainNav);
-
     if (navToggle && mainNav) {
         navToggle.addEventListener('click', (e) => {
-            console.log('Hamburger clicked');
             const isActive = mainNav.classList.toggle('active');
             navToggle.classList.toggle('active');
             navToggle.setAttribute('aria-expanded', isActive);
@@ -72,14 +66,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Close menu when a link is clicked
         navLinks.forEach(link => {
             link.addEventListener('click', () => {
-                console.log('Nav link clicked - closing menu');
                 mainNav.classList.remove('active');
                 navToggle.classList.remove('active');
                 navToggle.setAttribute('aria-expanded', 'false');
                 document.body.style.overflow = '';
             });
         });
-    } else {
-        console.error('Mobile nav elements not found!');
     }
 });
