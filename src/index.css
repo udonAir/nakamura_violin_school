@@ -1343,6 +1343,10 @@ ul {
     left: 0;
   }
 
+  .hero-image-frame img {
+    object-position: center 20%;
+  }
+
   .nav-list {
     display: flex;
     flex-direction: column;
