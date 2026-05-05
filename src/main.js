@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </article>`).join('');
 
-            if (blogSection) blogSection.style.display = '';
+            if (blogSection) blogSection.style.display = 'block';
             observeReveal(blogGrid);
         })
         .catch(hideBlog);
