@@ -1412,7 +1412,8 @@ ul {
 
 @media (max-width: 600px) {
   .hero {
-    padding: 16px 0 24px;
+    padding: 8px 0 16px;
+    align-items: flex-start;
   }
 
   .section {
@@ -1423,8 +1424,11 @@ ul {
     margin-bottom: 32px;
   }
 
-  .section-head p {
-    text-wrap: balance;
+  .section-head p,
+  .blog-card-title,
+  .blog-card-excerpt {
+    word-break: auto-phrase;
+    overflow-wrap: break-word;
   }
 
   .hero-title {
