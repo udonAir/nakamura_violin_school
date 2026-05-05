@@ -1932,7 +1932,7 @@ ul {
 }
 
 /* ===== BLOG ===== */
-#blog:has(#blog-grid:empty) {
+#blog {
   display: none;
 }
 .blog-grid {
