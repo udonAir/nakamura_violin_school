@@ -1881,7 +1881,7 @@ ul {
   margin-bottom: 0;
 }
 #contact .section-head h2 {
-  font-size: 1.2rem;
+  font-size: 1.2rem !important;
 }
 .contact-cta {
   text-align: center;
