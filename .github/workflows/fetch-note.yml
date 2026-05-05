@@ -1,0 +1,90 @@
+name: Fetch note.com articles
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # 6時間ごと
+  workflow_dispatch:       # 手動実行も可能
+
+jobs:
+  fetch-note:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch RSS and generate JSON
+        run: |
+          python3 - <<'EOF'
+          import urllib.request
+          import xml.etree.ElementTree as ET
+          import json
+          import re
+          from datetime import datetime
+
+          NOTE_USERNAME = "nakamura_violin"
+          RSS_URL = f"https://note.com/{NOTE_USERNAME}/rss"
+
+          try:
+              req = urllib.request.Request(RSS_URL, headers={"User-Agent": "Mozilla/5.0"})
+              with urllib.request.urlopen(req, timeout=15) as response:
+                  rss_content = response.read()
+
+              root = ET.fromstring(rss_content)
+              channel = root.find("channel")
+              items = channel.findall("item")
+
+              posts = []
+              for item in items[:6]:
+                  title = item.findtext("title", "")
+                  link = item.findtext("link", "")
+                  pub_date = item.findtext("pubDate", "")
+                  description = item.findtext("description", "")
+
+                  # HTMLタグを除去して本文抜粋を作成
+                  clean_desc = re.sub(r"<[^>]+>", "", description).strip()
+                  clean_desc = (clean_desc[:110] + "…") if len(clean_desc) > 110 else clean_desc
+
+                  # 日付フォーマット変換
+                  try:
+                      dt = datetime.strptime(pub_date[:25], "%a, %d %b %Y %H:%M:%S")
+                      formatted_date = dt.strftime("%Y.%m.%d")
+                  except Exception:
+                      formatted_date = pub_date[:10]
+
+                  # サムネイル画像を取得（description内のimgタグから）
+                  thumbnail = ""
+                  img_match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', description)
+                  if img_match:
+                      thumbnail = img_match.group(1)
+
+                  posts.append({
+                      "title": title,
+                      "link": link,
+                      "date": formatted_date,
+                      "excerpt": clean_desc,
+                      "thumbnail": thumbnail,
+                  })
+
+              output = {
+                  "posts": posts,
+                  "updated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+              }
+
+              with open("assets/note-posts.json", "w", encoding="utf-8") as f:
+                  json.dump(output, f, ensure_ascii=False, indent=2)
+
+              print(f"✅ {len(posts)} 件取得完了")
+
+          except Exception as e:
+              print(f"⚠️ エラー: {e}")
+              import sys; sys.exit(1)
+          EOF
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add assets/note-posts.json
+          git diff --cached --quiet && echo "変更なし" || (git commit -m "chore: update note posts" && git push)
