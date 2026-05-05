@@ -1412,7 +1412,19 @@ ul {
 
 @media (max-width: 600px) {
   .hero {
-    padding: 80px 0 40px;
+    padding: 16px 0 24px;
+  }
+
+  .section {
+    padding: 28px 0;
+  }
+
+  .section-head {
+    margin-bottom: 32px;
+  }
+
+  .section-head p {
+    text-wrap: balance;
   }
 
   .hero-title {
@@ -1991,6 +2003,7 @@ ul {
   font-size: 0.82rem;
   color: var(--text-sub);
   line-height: 1.85;
+  text-wrap: balance;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
