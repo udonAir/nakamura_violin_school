@@ -57,7 +57,7 @@ jobs:
                   thumbnail = ""
                   media_thumb = item.find("{http://search.yahoo.com/mrss/}thumbnail")
                   if media_thumb is not None:
-                      thumbnail = media_thumb.get("url", "")
+                      thumbnail = media_thumb.get("url", "") or (media_thumb.text or "").strip()
                   if not thumbnail:
                       img_match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', description)
                       if img_match:
