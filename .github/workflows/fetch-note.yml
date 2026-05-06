@@ -53,11 +53,15 @@ jobs:
                   except Exception:
                       formatted_date = pub_date[:10]
 
-                  # サムネイル画像を取得（description内のimgタグから）
+                  # サムネイル画像を取得（media:thumbnail → descriptionのimgタグの順で探す）
                   thumbnail = ""
-                  img_match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', description)
-                  if img_match:
-                      thumbnail = img_match.group(1)
+                  media_thumb = item.find("{http://search.yahoo.com/mrss/}thumbnail")
+                  if media_thumb is not None:
+                      thumbnail = media_thumb.get("url", "")
+                  if not thumbnail:
+                      img_match = re.search(r'<img[^>]+src=["\']([^"\']+)["\']', description)
+                      if img_match:
+                          thumbnail = img_match.group(1)
 
                   posts.append({
                       "title": title,
