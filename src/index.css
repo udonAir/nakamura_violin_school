@@ -1897,7 +1897,12 @@ ul {
   font-family: var(--font-serif);
   font-size: 1.4rem;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: 4px;
+}
+.footer-tradename {
+  font-size: 0.78rem;
+  opacity: 0.65;
+  margin-bottom: 16px;
 }
 .footer-ig-label {
   margin-left: 8px;
