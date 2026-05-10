@@ -352,6 +352,15 @@ ul {
   margin-bottom: 24px;
 }
 
+.hero-location {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  color: var(--uguisu);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+
 /* Main Heading: Horizontal, readable, serif */
 .hero-title {
   font-family: var(--font-serif);
