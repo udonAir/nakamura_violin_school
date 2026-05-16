@@ -2048,9 +2048,53 @@ ul {
    COURSE DETAIL PAGES
    ============================== */
 .page-hero {
-  padding: 56px 0 48px;
+  padding: 52px 0 52px;
   background: var(--bg-alt);
   border-bottom: 1px solid var(--border);
+  border-top: 3px solid var(--uguisu);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40%;
+  height: 100%;
+  background: radial-gradient(ellipse at 80% 50%, rgba(146, 140, 54, 0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.page-hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 52px;
+  align-items: center;
+}
+
+.page-hero-image {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  box-shadow: var(--shadow-float);
+}
+
+.page-hero-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-lg);
+  box-shadow: inset 0 0 0 1px rgba(146, 140, 54, 0.15);
+}
+
+.page-hero-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .breadcrumb {
@@ -2070,25 +2114,25 @@ ul {
 
 .breadcrumb a:hover { opacity: 0.7; }
 
-.breadcrumb-sep { color: var(--greige); }
+.breadcrumb-sep { color: var(--uguisu); opacity: 0.4; }
 
 .page-hero-badge {
   display: inline-block;
   font-family: var(--font-sans);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--uguisu);
-  border: 1px solid var(--uguisu);
-  padding: 4px 14px;
+  background: var(--uguisu);
+  color: white;
+  padding: 5px 16px;
   border-radius: var(--radius-sm);
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
 
 .page-hero-badge--coming {
+  background: var(--greige);
   color: var(--charcoal-light);
-  border-color: var(--greige);
 }
 
 .page-hero h1 {
@@ -2096,15 +2140,38 @@ ul {
   font-size: clamp(1.8rem, 4vw, 2.8rem);
   font-weight: 500;
   line-height: 1.3;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   letter-spacing: 0.04em;
+}
+
+.page-hero h1::after {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 2px;
+  background: var(--uguisu);
+  margin-top: 14px;
+  margin-bottom: 16px;
+  opacity: 0.7;
 }
 
 .page-hero-sub {
   color: var(--text-sub);
   font-size: 0.95rem;
-  max-width: 540px;
   line-height: 1.9;
+}
+
+@media (max-width: 768px) {
+  .page-hero-grid {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .page-hero-image {
+    max-width: 420px;
+    margin: 0 auto;
+    aspect-ratio: 16 / 10;
+  }
 }
 
 .coming-soon-banner {
