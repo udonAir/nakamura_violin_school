@@ -2069,16 +2069,17 @@ ul {
 
 .page-hero-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 52px;
+  grid-template-columns: 1fr 300px;
+  gap: 48px;
   align-items: center;
 }
 
 .page-hero-image {
   position: relative;
+  width: 300px;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 3 / 4;
   box-shadow: var(--shadow-float);
 }
 
@@ -2164,13 +2165,14 @@ ul {
 @media (max-width: 768px) {
   .page-hero-grid {
     grid-template-columns: 1fr;
-    gap: 28px;
+    gap: 24px;
   }
 
   .page-hero-image {
-    max-width: 420px;
+    width: 100%;
+    max-width: 300px;
     margin: 0 auto;
-    aspect-ratio: 16 / 10;
+    aspect-ratio: 4 / 3;
   }
 }
 
