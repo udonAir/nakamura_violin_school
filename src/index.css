@@ -2145,16 +2145,6 @@ ul {
   letter-spacing: 0.04em;
 }
 
-.page-hero h1::after {
-  content: '';
-  display: block;
-  width: 40px;
-  height: 2px;
-  background: var(--uguisu);
-  margin-top: 14px;
-  margin-bottom: 16px;
-  opacity: 0.7;
-}
 
 .page-hero-sub {
   color: var(--text-sub);
