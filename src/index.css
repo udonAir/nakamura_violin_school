@@ -478,6 +478,7 @@ ul {
   text-align: center;
   letter-spacing: 0.05em;
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Primary: Simple Charcoal or Greige */
@@ -495,6 +496,7 @@ ul {
 .btn-primary:visited {
   background: var(--uguisu);
   color: var(--white);
+  -webkit-text-fill-color: var(--white);
 }
 
 .btn-primary:hover {
