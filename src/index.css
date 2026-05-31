@@ -491,6 +491,12 @@ ul {
   border: 1px solid transparent;
 }
 
+.btn-primary:link,
+.btn-primary:visited {
+  background: var(--uguisu);
+  color: var(--white);
+}
+
 .btn-primary:hover {
   background: var(--charcoal);
   color: var(--white);
