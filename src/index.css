@@ -2236,6 +2236,19 @@ ul {
   vertical-align: middle;
 }
 
+.open-tag {
+  display: inline-block;
+  background: var(--uguisu);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 2px 10px;
+  border-radius: var(--radius-sm);
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
 .course-plan-desc {
   font-size: 0.9rem;
   color: var(--text-sub);
