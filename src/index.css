@@ -1922,6 +1922,9 @@ ul {
 /* Course button wrapper */
 .course-btn-wrap {
   margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 /* Access section */
