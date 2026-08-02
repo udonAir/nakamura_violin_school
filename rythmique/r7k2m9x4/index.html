@@ -63,16 +63,15 @@
                         <h2 class="bk-head"><span class="bk-step">1</span>クラスとお申込み内容</h2>
 
                         <fieldset class="bk-fieldset">
-                            <legend>クラス</legend>
+                            <legend>コース</legend>
                             <label class="bk-radio">
-                                <input type="radio" name="ageClass" value="age0_2" checked>
-                                <span>0〜2歳（単発 2,500円／回）</span>
+                                <input type="radio" name="ageClass" value="age0_3" checked>
+                                <span>0〜3歳コース</span>
                             </label>
                             <label class="bk-radio">
-                                <input type="radio" name="ageClass" value="age3_5">
-                                <span>3〜5歳（単発 3,000円／回）</span>
+                                <input type="radio" name="ageClass" value="age4_5">
+                                <span>4〜5歳コース</span>
                             </label>
-                            <p class="bk-hint">3歳までは前半、4歳からは後半の枠をお選びください。</p>
                         </fieldset>
 
                         <fieldset class="bk-fieldset">
@@ -116,7 +115,8 @@
                     <!-- STEP 2 -->
                     <div class="bk-panel">
                         <h2 class="bk-head"><span class="bk-step">2</span>参加予定日</h2>
-                        <p class="bk-hint">お選びいただける期間：<strong id="bk-period"></strong></p>
+                        <p class="bk-hint">お選びいただける期間：<strong id="bk-period"></strong><br>
+                            レッスン時間：<strong id="bk-time"></strong></p>
                         <div class="bk-summary">
                             <span>選択中 <strong id="bk-count">0 / 6 日</strong></span>
                             <span>お支払い予定 <strong id="bk-amount">12,500円</strong></span>
@@ -135,6 +135,14 @@
                         <div class="bk-field">
                             <label for="bk-child">お子様のお名前 <span class="bk-required">必須</span></label>
                             <input type="text" id="bk-child" required maxlength="50">
+                        </div>
+                        <div class="bk-field">
+                            <label for="bk-birth">お子様の生年月日 <span class="bk-required">必須</span></label>
+                            <input type="date" id="bk-birth" required>
+                        </div>
+                        <div class="bk-field">
+                            <label for="bk-email">メールアドレス <span class="bk-required">必須</span></label>
+                            <input type="email" id="bk-email" required autocomplete="email" maxlength="254">
                         </div>
                         <div class="bk-field">
                             <label for="bk-note">ご連絡事項（任意）</label>

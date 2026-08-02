@@ -2549,7 +2549,8 @@ ul {
 }
 
 .bk-cal {
-  margin-bottom: 26px;
+  max-width: 340px;
+  margin: 0 auto 22px;
 }
 
 .bk-cal-title {
@@ -2564,7 +2565,7 @@ ul {
 .bk-cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 4px;
+  gap: 3px;
 }
 
 .bk-cal-wd {
@@ -2579,17 +2580,19 @@ ul {
 .bk-cal-wd--sat { color: #7a8ba8; }
 
 .bk-cal-cell {
-  aspect-ratio: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: 0.85rem;
-  border-radius: 8px;
+  border-radius: 6px;
+  min-height: 40px;
+  padding: 2px 0;
 }
 
 .bk-cal-cell--blank {
   visibility: hidden;
+  min-height: 0;
 }
 
 .bk-cal-cell--off {
@@ -2618,7 +2621,7 @@ ul {
 }
 
 .bk-cal-num {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 700;
   line-height: 1.1;
 }
@@ -2793,16 +2796,12 @@ ul {
     padding: 20px 18px;
   }
 
-  .bk-cal-grid {
-    gap: 3px;
+  .bk-cal-cell {
+    min-height: 36px;
   }
 
   .bk-cal-num {
-    font-size: 0.85rem;
-  }
-
-  .bk-cal-meta {
-    font-size: 0.55rem;
+    font-size: 0.8rem;
   }
 
   .bk-receipt-list {

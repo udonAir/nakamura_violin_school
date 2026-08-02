@@ -7,17 +7,21 @@
     'https://docs.google.com/forms/d/1D1GHXF9IeXEmMy0lBG19rGpgoC9d2AB9rEwnRlm72jE/viewform';
 
   var TICKET_PRICES = {
-    age0_2: { 6: 12500, 7: 13000, 8: 13500 },
-    age3_5: { 6: 17000, 7: 17500, 8: 18000 }
+    age0_3: { 6: 12500, 7: 13000, 8: 13500 },
+    age4_5: { 6: 17000, 7: 17500, 8: 18000 }
   };
-  var SINGLE_PRICES = { age0_2: 2500, age3_5: 3000 };
+  var SINGLE_PRICES = { age0_3: 2500, age4_5: 3000 };
+
+  /* コースと時間枠の対応。0〜3歳は前半、4〜5歳は後半。 */
+  var PART_BY_AGE = { age0_3: 'first', age4_5: 'second' };
 
   var WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
   var state = {
+    allSlots: [],
     slots: [],
     selected: [],
-    ageClass: 'age0_2',
+    ageClass: 'age0_3',
     purchaseType: 'ticket',
     ticketType: 6,
     validFrom: '',
@@ -74,11 +78,11 @@
         return res.json();
       })
       .then(function (data) {
-        state.slots = (data.slots || []).filter(function (s) {
+        state.allSlots = (data.slots || []).filter(function (s) {
           return s.status === 'open' && s.date >= p.validFrom && s.date <= p.validTo;
         });
         status.textContent = '';
-        renderCalendar();
+        applyAgeClass();
       })
       .catch(function () {
         status.textContent =
@@ -109,6 +113,20 @@
       if (m > 12) { m = 1; y += 1; }
     }
     return months;
+  }
+
+  /** 選択中のコースに対応する時間枠だけを表示対象にする */
+  function applyAgeClass() {
+    var part = PART_BY_AGE[state.ageClass];
+    state.slots = state.allSlots.filter(function (s) { return s.part === part; });
+
+    var sample = state.slots[0];
+    $('#bk-time').textContent = sample
+      ? sample.startTime + '〜' + sample.endTime + '（60分）'
+      : '—';
+
+    state.selected = [];
+    renderCalendar();
   }
 
   function renderCalendar() {
@@ -311,6 +329,14 @@
       errorBox.textContent = 'お子様のお名前を入力してください。';
       return;
     }
+    if (!$('#bk-birth').value) {
+      errorBox.textContent = 'お子様の生年月日を入力してください。';
+      return;
+    }
+    if (!$('#bk-email').value.trim()) {
+      errorBox.textContent = 'メールアドレスを入力してください。';
+      return;
+    }
 
     var btn = $('#bk-submit');
     errorBox.textContent = '';
@@ -319,6 +345,8 @@
 
     var payload = {
       childName: childName,
+      birthDate: $('#bk-birth').value,
+      email: $('#bk-email').value.trim(),
       ageClass: state.ageClass,
       purchaseType: state.purchaseType,
       ticketType: state.ticketType,
@@ -453,7 +481,7 @@
       function (el) {
         el.addEventListener('change', function () {
           state.ageClass = el.value;
-          updateSelectionUI();
+          applyAgeClass();
         });
       }
     );
