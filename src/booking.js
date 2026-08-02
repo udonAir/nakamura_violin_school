@@ -103,11 +103,16 @@
 
   function monthsInPeriod() {
     var months = [];
+    if (!state.validFrom || !state.validTo) return months;
+
     var start = state.validFrom.slice(0, 7).split('-');
     var y = Number(start[0]);
     var m = Number(start[1]);
     var end = state.validTo.slice(0, 7);
-    while (true) {
+    if (!y || !m) return months;
+
+    // 念のため上限を設け、条件が壊れても止まらないようにする
+    for (var i = 0; i < 24; i++) {
       var cur = y + '-' + pad(m);
       months.push(cur);
       if (cur === end) break;
@@ -422,6 +427,9 @@
       })
       .then(function (t) {
         receipt.ticket = t;
+        // カレンダーの月を列挙するのに使う
+        state.validFrom = t.validFrom;
+        state.validTo = t.validTo;
         // 変更先の候補を出すため、開講枠も読み込んでおく
         return fetch(
           API_BASE + '/slots?from=' + t.validFrom.slice(0, 7) + '&to=' + t.validTo.slice(0, 7)
