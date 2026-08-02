@@ -267,8 +267,11 @@
         var on = state.selected.indexOf(btn.dataset.slotId) >= 0;
         btn.classList.toggle('bk-cal-day--on', on);
         btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        // 済んでしまった回は外せないので押せなくする
+        var locked = state.mode === 'edit' && state.lockedIds.indexOf(btn.dataset.slotId) >= 0;
+        btn.classList.toggle('bk-cal-day--locked', locked);
         if (!btn.classList.contains('bk-cal-day--full')) {
-          btn.disabled = !on && got >= need;
+          btn.disabled = locked || (!on && got >= need);
         }
       }
     );
@@ -404,12 +407,17 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /* ===== 控えの表示と日程変更 ===== */
+  /* ===== 控えの表示と変更 ===== */
 
   var receipt = { ticketId: '', token: '', ticket: null };
 
+  function todayJst() {
+    return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+  }
+
   function loadReceipt(ticketId, token) {
     $('#bk-form-section').hidden = true;
+    $('#bk-notice').hidden = true;
     $('#bk-lookup').hidden = false;
     receipt.ticketId = ticketId;
     receipt.token = token;
@@ -430,7 +438,7 @@
         // カレンダーの月を列挙するのに使う
         state.validFrom = t.validFrom;
         state.validTo = t.validTo;
-        // 変更先の候補を出すため、開講枠も読み込んでおく
+
         return fetch(
           API_BASE + '/slots?from=' + t.validFrom.slice(0, 7) + '&to=' + t.validTo.slice(0, 7)
         )
@@ -447,10 +455,6 @@
       });
   }
 
-  function todayJst() {
-    return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
-  }
-
   function renderReceipt() {
     var t = receipt.ticket;
     var box = $('#bk-lookup-body');
@@ -460,10 +464,7 @@
     dl.className = 'bk-receipt-list';
     [
       ['お名前', t.childName],
-      ['お申込み', t.purchaseType === 'single'
-        ? '単発レッスン ' + t.ticketType + '回'
-        : t.ticketType + '回券'],
-      ['お支払い金額', formatYen(t.amount)],
+      ['コース', t.ageClass === 'age4_5' ? '4〜5歳コース' : '0〜3歳コース'],
       ['有効期間', t.validFrom + ' 〜 ' + t.validTo],
       ['お手続き状況', t.status === 'paid' ? 'お支払い確認済み' : '受付済み（お支払い前）']
     ].forEach(function (r) {
@@ -476,102 +477,65 @@
     });
     box.appendChild(dl);
 
+    var editor = document.createElement('div');
+    editor.id = 'bk-editor';
+    box.appendChild(editor);
+
+    if (t.status === 'pending') {
+      openPlanEditor();
+    } else {
+      renderReadOnly();
+    }
+  }
+
+  /** お支払い済みの場合は閲覧のみ */
+  function renderReadOnly() {
+    var t = receipt.ticket;
+    var editor = $('#bk-editor');
+
     var h = document.createElement('h3');
     h.className = 'bk-subhead';
     h.textContent = '参加予定日';
-    box.appendChild(h);
-
-    var msg = document.createElement('p');
-    msg.className = 'bk-error';
-    msg.id = 'bk-change-msg';
-    box.appendChild(msg);
-
-    var today = todayJst();
+    editor.appendChild(h);
 
     var ul = document.createElement('ul');
     ul.className = 'bk-date-list';
     t.reservations.forEach(function (r) {
       var li = document.createElement('li');
-      li.className = 'bk-res-row';
-
-      var label = document.createElement('span');
-      label.textContent = r.date.slice(0, 4) + '年' + formatDateJa(r.date);
-      li.appendChild(label);
-
-      if (r.date > today) {
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'btn btn-outline btn-sm';
-        btn.textContent = '変更';
-        btn.addEventListener('click', function () { openChange(r); });
-        li.appendChild(btn);
-      } else {
-        var past = document.createElement('span');
-        past.className = 'bk-res-past';
-        past.textContent = '変更不可';
-        li.appendChild(past);
-      }
-
+      li.textContent = r.date.slice(0, 4) + '年' + formatDateJa(r.date);
       ul.appendChild(li);
     });
-    box.appendChild(ul);
+    editor.appendChild(ul);
 
     var note = document.createElement('p');
     note.className = 'bk-hint';
     note.textContent =
-      '※当日および過去の日程は変更できません。お急ぎの場合は教室までご連絡ください。';
-    box.appendChild(note);
-
-    var panel = document.createElement('div');
-    panel.id = 'bk-change-panel';
-    panel.className = 'bk-change-panel';
-    panel.hidden = true;
-    box.appendChild(panel);
-
-    // 入金前のみ、回数（券種）ごと変更できる
-    if (t.status === 'pending') {
-      var editBtn = document.createElement('button');
-      editBtn.type = 'button';
-      editBtn.className = 'btn btn-outline btn-sm';
-      editBtn.textContent = '回数・日程をまとめて変更する';
-      editBtn.addEventListener('click', openPlanEditor);
-      box.appendChild(editBtn);
-    } else {
-      var paid = document.createElement('p');
-      paid.className = 'bk-hint';
-      paid.textContent =
-        '※お支払い済みのため、回数の変更は教室までご連絡ください。';
-      box.appendChild(paid);
-    }
-
-    var editor = document.createElement('div');
-    editor.id = 'bk-editor';
-    editor.className = 'bk-change-panel';
-    editor.hidden = true;
-    box.appendChild(editor);
+      '※お支払い済みのため、こちらからの変更はできません。変更をご希望の場合は教室までご連絡ください。';
+    editor.appendChild(note);
   }
 
-  /* ===== 回数・日程のまとめて変更 ===== */
+  /* ===== 回数・日程の変更（控えページの本体） ===== */
 
   function openPlanEditor() {
     var t = receipt.ticket;
     var today = todayJst();
-    var part = null;
+
     var cur = state.allSlots.filter(function (sl) {
       return sl.slotId === t.reservations[0].slotId;
     })[0];
-    if (cur) part = cur.part;
+    var part = cur ? cur.part : null;
 
     state.mode = 'edit';
     state.purchaseType = t.purchaseType;
     state.ticketType = t.ticketType;
     state.ageClass = t.ageClass;
     state.selected = t.reservations.map(function (r) { return r.slotId; });
+    // 済んでしまった回は外せない
     state.lockedIds = t.reservations
       .filter(function (r) { return r.date <= today; })
       .map(function (r) { return r.slotId; });
 
-    // 変更できるのは同じコースの時間帯・明日以降の枠。すでに選んでいる分は残す
+    // 同じコースの時間帯で、明日以降の空きがある枠。すでに選んでいる分は残す
     state.slots = state.allSlots.filter(function (sl) {
       if (part && sl.part !== part) return false;
       if (state.selected.indexOf(sl.slotId) >= 0) return true;
@@ -579,9 +543,8 @@
     });
 
     var editor = $('#bk-editor');
-    editor.hidden = false;
     editor.innerHTML =
-      '<h3 class="bk-subhead">回数・日程の変更</h3>' +
+      '<h3 class="bk-subhead">回数と参加予定日</h3>' +
       '<div class="bk-field"><label for="bk-edit-type">回数</label>' +
       '<select id="bk-edit-type" class="bk-select"></select></div>' +
       '<div class="bk-summary"><span>選択中 <strong id="bk-edit-count"></strong></span>' +
@@ -589,11 +552,11 @@
       '<p class="bk-pay-note">お支払いは初回レッスン時に現金でお支払いをお願いします</p>' +
       '<p id="bk-edit-select-msg" class="bk-select-msg"></p>' +
       '<div id="bk-edit-calendar"></div>' +
+      '<p class="bk-cal-legend">★ … 育児のお悩み相談会はお休みの日（リトミックは通常どおり開講します）<br>' +
+      '※当日および過去の日程は変更できません。お急ぎの場合は教室までご連絡ください。</p>' +
       '<p id="bk-edit-error" class="bk-error" role="alert"></p>' +
-      '<div class="ad-actions">' +
-      '<button type="button" id="bk-edit-submit" class="btn btn-primary btn-sm">この内容に変更する</button>' +
-      '<button type="button" id="bk-edit-cancel" class="btn btn-outline btn-sm">やめる</button>' +
-      '</div>';
+      '<p id="bk-edit-done" class="bk-select-msg bk-select-msg--done"></p>' +
+      '<button type="button" id="bk-edit-submit" class="btn btn-primary">この内容に変更する</button>';
 
     var sel = $('#bk-edit-type');
     var options = t.purchaseType === 'single' ? [1, 2, 3] : [6, 7, 8];
@@ -618,22 +581,16 @@
       updateSelectionUI();
     });
 
-    $('#bk-edit-cancel').addEventListener('click', closePlanEditor);
     $('#bk-edit-submit').addEventListener('click', submitPlan);
 
     renderCalendar();
-    editor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-
-  function closePlanEditor() {
-    state.mode = 'form';
-    $('#bk-editor').hidden = true;
   }
 
   function submitPlan() {
     var btn = $('#bk-edit-submit');
     var err = $('#bk-edit-error');
     err.textContent = '';
+    $('#bk-edit-done').textContent = '';
     btn.disabled = true;
     btn.textContent = '変更しています…';
 
@@ -658,112 +615,15 @@
         }
         state.mode = 'form';
         loadReceipt(receipt.ticketId, receipt.token);
+        window.setTimeout(function () {
+          var d = $('#bk-edit-done');
+          if (d) d.textContent = '変更内容を保存しました。';
+        }, 600);
       })
       .catch(function () {
         err.textContent = '通信に失敗しました。時間をおいてお試しください。';
         btn.disabled = false;
         btn.textContent = 'この内容に変更する';
-      });
-  }
-
-  /** 変更先の候補を表示する */
-  function openChange(res) {
-    var t = receipt.ticket;
-    var today = todayJst();
-    var taken = t.reservations.map(function (r) { return r.slotId; });
-
-    // 同じ時間帯（コース）の枠のみを候補にする
-    var current = state.allSlots.filter(function (sl) { return sl.slotId === res.slotId; })[0];
-    var part = current ? current.part : null;
-
-    var candidates = state.allSlots.filter(function (sl) {
-      return (
-        sl.date > today &&
-        !sl.full &&
-        taken.indexOf(sl.slotId) < 0 &&
-        (part === null || sl.part === part)
-      );
-    });
-
-    var panel = $('#bk-change-panel');
-    panel.hidden = false;
-    panel.innerHTML = '';
-
-    var h = document.createElement('h3');
-    h.className = 'bk-subhead';
-    h.textContent = formatDateJa(res.date) + ' の変更先をお選びください';
-    panel.appendChild(h);
-
-    if (candidates.length === 0) {
-      var none = document.createElement('p');
-      none.className = 'bk-hint';
-      none.textContent = '変更できる空きの日程がありません。教室までご連絡ください。';
-      panel.appendChild(none);
-      return;
-    }
-
-    var list = document.createElement('div');
-    list.className = 'bk-change-list';
-    candidates.forEach(function (sl) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'bk-change-item';
-      var d = document.createElement('span');
-      d.textContent = formatDateJa(sl.date) + ' ' + sl.startTime + '〜';
-      var m = document.createElement('span');
-      m.className = 'bk-change-rest';
-      m.textContent = '残' + sl.remaining;
-      b.appendChild(d);
-      b.appendChild(m);
-      b.addEventListener('click', function () { submitChange(res.slotId, sl); });
-      list.appendChild(b);
-    });
-    panel.appendChild(list);
-
-    var cancel = document.createElement('button');
-    cancel.type = 'button';
-    cancel.className = 'btn btn-outline btn-sm';
-    cancel.textContent = 'やめる';
-    cancel.addEventListener('click', function () { panel.hidden = true; });
-    panel.appendChild(cancel);
-
-    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
-
-  function submitChange(fromSlotId, toSlot) {
-    if (!window.confirm(formatDateJa(toSlot.date) + ' に変更します。よろしいですか？')) return;
-
-    var panel = $('#bk-change-panel');
-    panel.textContent = '変更しています…';
-
-    fetch(API_BASE + '/tickets/' + encodeURIComponent(receipt.ticketId) + '/change', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        token: receipt.token,
-        fromSlotId: fromSlotId,
-        toSlotId: toSlot.slotId
-      })
-    })
-      .then(function (res) {
-        return res.json().then(function (data) { return { ok: res.ok, data: data }; });
-      })
-      .then(function (r) {
-        if (!r.ok) {
-          loadReceipt(receipt.ticketId, receipt.token);
-          window.setTimeout(function () {
-            var m = $('#bk-change-msg');
-            if (m) m.textContent = r.data.message || '変更できませんでした。';
-          }, 400);
-          return;
-        }
-        // 最新の内容を読み直す
-        loadReceipt(receipt.ticketId, receipt.token);
-      })
-      .catch(function () {
-        panel.hidden = true;
-        var m = $('#bk-change-msg');
-        if (m) m.textContent = '通信に失敗しました。時間をおいてお試しください。';
       });
   }
 
