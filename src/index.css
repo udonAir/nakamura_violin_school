@@ -2618,10 +2618,15 @@ ul {
   cursor: pointer;
   gap: 1px;
   transition: background 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.bk-cal-day:hover:not(:disabled) {
-  background: var(--bg-alt);
+/* タッチ端末では :hover が押したまま残り、選択色を上書きしてしまうため
+   マウス環境に限定する */
+@media (hover: hover) {
+  .bk-cal-day:hover:not(:disabled) {
+    background: var(--bg-alt);
+  }
 }
 
 .bk-cal-day:active:not(:disabled) {
@@ -2648,15 +2653,15 @@ ul {
   color: var(--uguisu);
 }
 
-/* 選択中 */
-.bk-cal-day--on {
+/* 選択中。ホバー等に負けないよう詳細度を上げておく */
+.bk-cal-day.bk-cal-day--on {
   background: var(--uguisu);
   border-color: var(--uguisu);
   color: var(--white);
 }
 
-.bk-cal-day--on .bk-cal-meta,
-.bk-cal-day--on .bk-cal-mark {
+.bk-cal-day.bk-cal-day--on .bk-cal-meta,
+.bk-cal-day.bk-cal-day--on .bk-cal-mark {
   color: var(--white);
 }
 
