@@ -18,9 +18,11 @@
   var WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
   var state = {
+    mode: 'form', // 'form'（新規申込） | 'edit'（控えページからの変更）
     allSlots: [],
     slots: [],
     selected: [],
+    lockedIds: [],
     ageClass: 'age0_3',
     purchaseType: 'ticket',
     ticketType: 6,
@@ -130,12 +132,14 @@
   }
 
   function renderCalendar() {
-    var wrap = $('#bk-calendar');
+    var wrap = $(state.mode === 'edit' ? '#bk-edit-calendar' : '#bk-calendar');
     wrap.innerHTML = '';
 
     if (state.slots.length === 0) {
-      $('#bk-calendar-status').textContent =
-        'この期間にご予約可能な開講日がありません。教室までお問い合わせください。';
+      if (state.mode !== 'edit') {
+        $('#bk-calendar-status').textContent =
+          'この期間にご予約可能な開講日がありません。教室までお問い合わせください。';
+      }
       return;
     }
 
@@ -235,6 +239,9 @@
   }
 
   function toggleDay(btn, slot) {
+    // 編集モードでは、済んでしまった回は外せない
+    if (state.mode === 'edit' && state.lockedIds.indexOf(slot.slotId) >= 0) return;
+
     var idx = state.selected.indexOf(slot.slotId);
     if (idx >= 0) {
       state.selected.splice(idx, 1);
@@ -261,10 +268,13 @@
       }
     );
 
-    $('#bk-count').textContent = got + ' / ' + need + ' 日';
-    $('#bk-amount').textContent = formatYen(estimateAmount());
+    // 編集モード（控えページからの変更）では別の要素を更新する
+    var prefix = state.mode === 'edit' ? '#bk-edit-' : '#bk-';
 
-    var msg = $('#bk-select-msg');
+    $(prefix + 'count').textContent = got + ' / ' + need + ' 日';
+    $(prefix + 'amount').textContent = formatYen(estimateAmount());
+
+    var msg = $(prefix + 'select-msg');
     if (got < need) {
       msg.textContent = 'あと' + (need - got) + '日、参加予定日をお選びください。';
       msg.className = 'bk-select-msg';
@@ -273,7 +283,7 @@
       msg.className = 'bk-select-msg bk-select-msg--done';
     }
 
-    $('#bk-submit').disabled = got !== need;
+    $(prefix + 'submit').disabled = got !== need;
   }
 
   function formatDateJa(date) {
@@ -509,6 +519,143 @@
     panel.className = 'bk-change-panel';
     panel.hidden = true;
     box.appendChild(panel);
+
+    // 入金前のみ、回数（券種）ごと変更できる
+    if (t.status === 'pending') {
+      var editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'btn btn-outline btn-sm';
+      editBtn.textContent = '回数・日程をまとめて変更する';
+      editBtn.addEventListener('click', openPlanEditor);
+      box.appendChild(editBtn);
+    } else {
+      var paid = document.createElement('p');
+      paid.className = 'bk-hint';
+      paid.textContent =
+        '※お支払い済みのため、回数の変更は教室までご連絡ください。';
+      box.appendChild(paid);
+    }
+
+    var editor = document.createElement('div');
+    editor.id = 'bk-editor';
+    editor.className = 'bk-change-panel';
+    editor.hidden = true;
+    box.appendChild(editor);
+  }
+
+  /* ===== 回数・日程のまとめて変更 ===== */
+
+  function openPlanEditor() {
+    var t = receipt.ticket;
+    var today = todayJst();
+    var part = null;
+    var cur = state.allSlots.filter(function (sl) {
+      return sl.slotId === t.reservations[0].slotId;
+    })[0];
+    if (cur) part = cur.part;
+
+    state.mode = 'edit';
+    state.purchaseType = t.purchaseType;
+    state.ticketType = t.ticketType;
+    state.ageClass = t.ageClass;
+    state.selected = t.reservations.map(function (r) { return r.slotId; });
+    state.lockedIds = t.reservations
+      .filter(function (r) { return r.date <= today; })
+      .map(function (r) { return r.slotId; });
+
+    // 変更できるのは同じコースの時間帯・明日以降の枠。すでに選んでいる分は残す
+    state.slots = state.allSlots.filter(function (sl) {
+      if (part && sl.part !== part) return false;
+      if (state.selected.indexOf(sl.slotId) >= 0) return true;
+      return sl.date > today && !sl.full;
+    });
+
+    var editor = $('#bk-editor');
+    editor.hidden = false;
+    editor.innerHTML =
+      '<h3 class="bk-subhead">回数・日程の変更</h3>' +
+      '<div class="bk-field"><label for="bk-edit-type">回数</label>' +
+      '<select id="bk-edit-type" class="bk-select"></select></div>' +
+      '<div class="bk-summary"><span>選択中 <strong id="bk-edit-count"></strong></span>' +
+      '<span>お支払い予定 <strong id="bk-edit-amount"></strong></span></div>' +
+      '<p class="bk-pay-note">お支払いは初回レッスン時に現金でお支払いをお願いします</p>' +
+      '<p id="bk-edit-select-msg" class="bk-select-msg"></p>' +
+      '<div id="bk-edit-calendar"></div>' +
+      '<p id="bk-edit-error" class="bk-error" role="alert"></p>' +
+      '<div class="ad-actions">' +
+      '<button type="button" id="bk-edit-submit" class="btn btn-primary btn-sm">この内容に変更する</button>' +
+      '<button type="button" id="bk-edit-cancel" class="btn btn-outline btn-sm">やめる</button>' +
+      '</div>';
+
+    var sel = $('#bk-edit-type');
+    var options = t.purchaseType === 'single' ? [1, 2, 3] : [6, 7, 8];
+    options.forEach(function (n) {
+      var o = document.createElement('option');
+      o.value = n;
+      o.textContent = t.purchaseType === 'single' ? n + '回' : n + '回券';
+      if (n === t.ticketType) o.selected = true;
+      sel.appendChild(o);
+    });
+
+    sel.addEventListener('change', function () {
+      state.ticketType = Number(this.value);
+      // 回数を減らしたときは、済んだ回を優先して残す
+      if (state.selected.length > state.ticketType) {
+        var keep = state.lockedIds.slice();
+        state.selected.forEach(function (id) {
+          if (keep.length < state.ticketType && keep.indexOf(id) < 0) keep.push(id);
+        });
+        state.selected = keep;
+      }
+      updateSelectionUI();
+    });
+
+    $('#bk-edit-cancel').addEventListener('click', closePlanEditor);
+    $('#bk-edit-submit').addEventListener('click', submitPlan);
+
+    renderCalendar();
+    editor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function closePlanEditor() {
+    state.mode = 'form';
+    $('#bk-editor').hidden = true;
+  }
+
+  function submitPlan() {
+    var btn = $('#bk-edit-submit');
+    var err = $('#bk-edit-error');
+    err.textContent = '';
+    btn.disabled = true;
+    btn.textContent = '変更しています…';
+
+    fetch(API_BASE + '/tickets/' + encodeURIComponent(receipt.ticketId) + '/plan', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        token: receipt.token,
+        ticketType: state.ticketType,
+        slotIds: state.selected
+      })
+    })
+      .then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+      })
+      .then(function (r) {
+        if (!r.ok) {
+          err.textContent = r.data.message || '変更できませんでした。';
+          btn.disabled = false;
+          btn.textContent = 'この内容に変更する';
+          return;
+        }
+        state.mode = 'form';
+        loadReceipt(receipt.ticketId, receipt.token);
+      })
+      .catch(function () {
+        err.textContent = '通信に失敗しました。時間をおいてお試しください。';
+        btn.disabled = false;
+        btn.textContent = 'この内容に変更する';
+      });
   }
 
   /** 変更先の候補を表示する */
