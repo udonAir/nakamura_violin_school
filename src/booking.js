@@ -389,11 +389,16 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /* ===== 控えの表示 ===== */
+  /* ===== 控えの表示と日程変更 ===== */
+
+  var receipt = { ticketId: '', token: '', ticket: null };
 
   function loadReceipt(ticketId, token) {
     $('#bk-form-section').hidden = true;
     $('#bk-lookup').hidden = false;
+    receipt.ticketId = ticketId;
+    receipt.token = token;
+
     var box = $('#bk-lookup-body');
     box.textContent = '読み込んでいます…';
 
@@ -406,43 +411,204 @@
         return res.json();
       })
       .then(function (t) {
-        box.innerHTML = '';
-        var dl = document.createElement('dl');
-        dl.className = 'bk-receipt-list';
-        [
-          ['お名前', t.childName],
-          ['お申込み', t.purchaseType === 'single'
-            ? '単発レッスン ' + t.ticketType + '回'
-            : t.ticketType + '回券'],
-          ['お支払い金額', formatYen(t.amount)],
-          ['有効期間', t.validFrom + ' 〜 ' + t.validTo],
-          ['お手続き状況', t.status === 'paid' ? 'お支払い確認済み' : '受付済み（お支払い前）']
-        ].forEach(function (r) {
-          var dt = document.createElement('dt');
-          dt.textContent = r[0];
-          var dd = document.createElement('dd');
-          dd.textContent = r[1];
-          dl.appendChild(dt);
-          dl.appendChild(dd);
-        });
-        box.appendChild(dl);
-
-        var h = document.createElement('h3');
-        h.className = 'bk-subhead';
-        h.textContent = '参加予定日';
-        box.appendChild(h);
-
-        var ul = document.createElement('ul');
-        ul.className = 'bk-date-list';
-        t.reservations.forEach(function (r) {
-          var li = document.createElement('li');
-          li.textContent = r.date.slice(0, 4) + '年' + formatDateJa(r.date);
-          ul.appendChild(li);
-        });
-        box.appendChild(ul);
+        receipt.ticket = t;
+        // 変更先の候補を出すため、開講枠も読み込んでおく
+        return fetch(
+          API_BASE + '/slots?from=' + t.validFrom.slice(0, 7) + '&to=' + t.validTo.slice(0, 7)
+        )
+          .then(function (res) { return res.ok ? res.json() : { slots: [] }; })
+          .then(function (data) {
+            state.allSlots = (data.slots || []).filter(function (sl) {
+              return sl.status === 'open' && sl.date >= t.validFrom && sl.date <= t.validTo;
+            });
+            renderReceipt();
+          });
       })
       .catch(function () {
         box.textContent = 'お申込みが見つかりませんでした。URLが正しいかご確認ください。';
+      });
+  }
+
+  function todayJst() {
+    return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+  }
+
+  function renderReceipt() {
+    var t = receipt.ticket;
+    var box = $('#bk-lookup-body');
+    box.innerHTML = '';
+
+    var dl = document.createElement('dl');
+    dl.className = 'bk-receipt-list';
+    [
+      ['お名前', t.childName],
+      ['お申込み', t.purchaseType === 'single'
+        ? '単発レッスン ' + t.ticketType + '回'
+        : t.ticketType + '回券'],
+      ['お支払い金額', formatYen(t.amount)],
+      ['有効期間', t.validFrom + ' 〜 ' + t.validTo],
+      ['お手続き状況', t.status === 'paid' ? 'お支払い確認済み' : '受付済み（お支払い前）']
+    ].forEach(function (r) {
+      var dt = document.createElement('dt');
+      dt.textContent = r[0];
+      var dd = document.createElement('dd');
+      dd.textContent = r[1];
+      dl.appendChild(dt);
+      dl.appendChild(dd);
+    });
+    box.appendChild(dl);
+
+    var h = document.createElement('h3');
+    h.className = 'bk-subhead';
+    h.textContent = '参加予定日';
+    box.appendChild(h);
+
+    var msg = document.createElement('p');
+    msg.className = 'bk-error';
+    msg.id = 'bk-change-msg';
+    box.appendChild(msg);
+
+    var today = todayJst();
+
+    var ul = document.createElement('ul');
+    ul.className = 'bk-date-list';
+    t.reservations.forEach(function (r) {
+      var li = document.createElement('li');
+      li.className = 'bk-res-row';
+
+      var label = document.createElement('span');
+      label.textContent = r.date.slice(0, 4) + '年' + formatDateJa(r.date);
+      li.appendChild(label);
+
+      if (r.date > today) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-outline btn-sm';
+        btn.textContent = '変更';
+        btn.addEventListener('click', function () { openChange(r); });
+        li.appendChild(btn);
+      } else {
+        var past = document.createElement('span');
+        past.className = 'bk-res-past';
+        past.textContent = '変更不可';
+        li.appendChild(past);
+      }
+
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+
+    var note = document.createElement('p');
+    note.className = 'bk-hint';
+    note.textContent =
+      '※当日および過去の日程は変更できません。お急ぎの場合は教室までご連絡ください。';
+    box.appendChild(note);
+
+    var panel = document.createElement('div');
+    panel.id = 'bk-change-panel';
+    panel.className = 'bk-change-panel';
+    panel.hidden = true;
+    box.appendChild(panel);
+  }
+
+  /** 変更先の候補を表示する */
+  function openChange(res) {
+    var t = receipt.ticket;
+    var today = todayJst();
+    var taken = t.reservations.map(function (r) { return r.slotId; });
+
+    // 同じ時間帯（コース）の枠のみを候補にする
+    var current = state.allSlots.filter(function (sl) { return sl.slotId === res.slotId; })[0];
+    var part = current ? current.part : null;
+
+    var candidates = state.allSlots.filter(function (sl) {
+      return (
+        sl.date > today &&
+        !sl.full &&
+        taken.indexOf(sl.slotId) < 0 &&
+        (part === null || sl.part === part)
+      );
+    });
+
+    var panel = $('#bk-change-panel');
+    panel.hidden = false;
+    panel.innerHTML = '';
+
+    var h = document.createElement('h3');
+    h.className = 'bk-subhead';
+    h.textContent = formatDateJa(res.date) + ' の変更先をお選びください';
+    panel.appendChild(h);
+
+    if (candidates.length === 0) {
+      var none = document.createElement('p');
+      none.className = 'bk-hint';
+      none.textContent = '変更できる空きの日程がありません。教室までご連絡ください。';
+      panel.appendChild(none);
+      return;
+    }
+
+    var list = document.createElement('div');
+    list.className = 'bk-change-list';
+    candidates.forEach(function (sl) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'bk-change-item';
+      var d = document.createElement('span');
+      d.textContent = formatDateJa(sl.date) + ' ' + sl.startTime + '〜';
+      var m = document.createElement('span');
+      m.className = 'bk-change-rest';
+      m.textContent = '残' + sl.remaining;
+      b.appendChild(d);
+      b.appendChild(m);
+      b.addEventListener('click', function () { submitChange(res.slotId, sl); });
+      list.appendChild(b);
+    });
+    panel.appendChild(list);
+
+    var cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'btn btn-outline btn-sm';
+    cancel.textContent = 'やめる';
+    cancel.addEventListener('click', function () { panel.hidden = true; });
+    panel.appendChild(cancel);
+
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function submitChange(fromSlotId, toSlot) {
+    if (!window.confirm(formatDateJa(toSlot.date) + ' に変更します。よろしいですか？')) return;
+
+    var panel = $('#bk-change-panel');
+    panel.textContent = '変更しています…';
+
+    fetch(API_BASE + '/tickets/' + encodeURIComponent(receipt.ticketId) + '/change', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        token: receipt.token,
+        fromSlotId: fromSlotId,
+        toSlotId: toSlot.slotId
+      })
+    })
+      .then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+      })
+      .then(function (r) {
+        if (!r.ok) {
+          loadReceipt(receipt.ticketId, receipt.token);
+          window.setTimeout(function () {
+            var m = $('#bk-change-msg');
+            if (m) m.textContent = r.data.message || '変更できませんでした。';
+          }, 400);
+          return;
+        }
+        // 最新の内容を読み直す
+        loadReceipt(receipt.ticketId, receipt.token);
+      })
+      .catch(function () {
+        panel.hidden = true;
+        var m = $('#bk-change-msg');
+        if (m) m.textContent = '通信に失敗しました。時間をおいてお試しください。';
       });
   }
 

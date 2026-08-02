@@ -2826,3 +2826,60 @@ ul {
     margin-bottom: 10px;
   }
 }
+
+/* 控えページ：参加予定日と日程変更 */
+.bk-res-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.bk-res-past {
+  font-size: 0.72rem;
+  color: var(--charcoal-light);
+}
+
+.bk-change-panel {
+  border: 1px solid var(--uguisu);
+  border-radius: var(--radius-md);
+  padding: 18px;
+  margin-top: 18px;
+}
+
+.bk-change-list {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.bk-change-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: inherit;
+  font-size: 0.88rem;
+  text-align: left;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--white);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .bk-change-item:hover {
+    border-color: var(--uguisu);
+    background: var(--bg-alt);
+  }
+}
+
+.bk-change-rest {
+  font-size: 0.72rem;
+  color: var(--uguisu);
+  flex-shrink: 0;
+}
