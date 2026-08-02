@@ -273,23 +273,7 @@
       msg.className = 'bk-select-msg bk-select-msg--done';
     }
 
-    renderSelectedList();
     $('#bk-submit').disabled = got !== need;
-  }
-
-  function renderSelectedList() {
-    var ul = $('#bk-selected');
-    ul.innerHTML = '';
-    state.selected
-      .slice()
-      .sort()
-      .forEach(function (id) {
-        var slot = state.slots.filter(function (s) { return s.slotId === id; })[0];
-        if (!slot) return;
-        var li = document.createElement('li');
-        li.textContent = formatDateJa(slot.date) + ' ' + slot.startTime + '〜';
-        ul.appendChild(li);
-      });
   }
 
   function formatDateJa(date) {
@@ -350,7 +334,6 @@
       ageClass: state.ageClass,
       purchaseType: state.purchaseType,
       ticketType: state.ticketType,
-      photoConsent: $('#bk-photo').checked,
       slotIds: state.selected,
       note: $('#bk-note').value
     };

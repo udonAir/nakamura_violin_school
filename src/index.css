@@ -2537,6 +2537,14 @@ ul {
   margin-left: 6px;
 }
 
+.bk-pay-note {
+  font-size: 0.8rem;
+  color: var(--uguisu);
+  font-weight: 700;
+  margin-bottom: 14px;
+  line-height: 1.7;
+}
+
 .bk-select-msg {
   font-size: 0.85rem;
   color: var(--charcoal-light);
