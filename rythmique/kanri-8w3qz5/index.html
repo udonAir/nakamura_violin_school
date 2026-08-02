@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>リトミック予約 管理画面 | なかむらバイオリン教室</title>
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Zen+Maru+Gothic:wght@300;400;500;700&family=La+Belle+Aurore&display=swap" rel="stylesheet">
+    <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../../src/index.css">
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="container">
+            <span class="logo">
+                なかむらバイオリン教室
+                <small>リトミック予約 管理画面</small>
+            </span>
+        </div>
+    </header>
+
+    <section class="section">
+        <div class="container">
+
+            <!-- ===== ログイン ===== -->
+            <div id="ad-auth">
+                <div class="bk-panel ad-login">
+                    <form id="ad-login-form">
+                        <h2 class="bk-head">ログイン</h2>
+                        <div class="bk-field">
+                            <label for="ad-user">メールアドレス</label>
+                            <input type="email" id="ad-user" required autocomplete="username">
+                        </div>
+                        <div class="bk-field">
+                            <label for="ad-pass">パスワード</label>
+                            <input type="password" id="ad-pass" required autocomplete="current-password">
+                        </div>
+                        <p id="ad-login-error" class="bk-error" role="alert"></p>
+                        <button type="submit" id="ad-login-btn" class="btn btn-primary">ログイン</button>
+                    </form>
+
+                    <form id="ad-newpass-form" hidden>
+                        <h2 class="bk-head">パスワードの設定</h2>
+                        <p class="bk-hint">初回ログインのため、新しいパスワードを設定してください。<br>
+                            12文字以上で、大文字・小文字・数字をそれぞれ含めてください。</p>
+                        <div class="bk-field">
+                            <label for="ad-newpass1">新しいパスワード</label>
+                            <input type="password" id="ad-newpass1" required autocomplete="new-password">
+                        </div>
+                        <div class="bk-field">
+                            <label for="ad-newpass2">確認のためもう一度</label>
+                            <input type="password" id="ad-newpass2" required autocomplete="new-password">
+                        </div>
+                        <p id="ad-newpass-error" class="bk-error" role="alert"></p>
+                        <button type="submit" class="btn btn-primary">設定してログイン</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ===== 管理画面本体 ===== -->
+            <div id="ad-main" hidden>
+
+                <div class="ad-bar">
+                    <div class="ad-tabs">
+                        <button type="button" class="ad-tab ad-tab--on" data-tab="slots">開講日</button>
+                        <button type="button" class="ad-tab" data-tab="tickets">お申込み</button>
+                    </div>
+                    <div class="ad-bar-actions">
+                        <button type="button" id="ad-reload" class="btn btn-outline btn-sm">再読み込み</button>
+                        <button type="button" id="ad-logout" class="btn btn-outline btn-sm">ログアウト</button>
+                    </div>
+                </div>
+
+                <!-- 開講日 -->
+                <div id="ad-panel-slots">
+                    <div class="bk-panel">
+                        <h2 class="bk-head">開講日を追加</h2>
+                        <form id="ad-add-form" class="ad-add">
+                            <div class="bk-field">
+                                <label for="ad-new-date">日付</label>
+                                <input type="date" id="ad-new-date" required>
+                            </div>
+                            <div class="bk-field">
+                                <label for="ad-new-part">時間枠</label>
+                                <select id="ad-new-part" class="bk-select">
+                                    <option value="first">前半 15:30〜16:30（0〜3歳）</option>
+                                    <option value="second">後半 16:45〜17:45（4〜5歳）</option>
+                                </select>
+                            </div>
+                            <div class="bk-field">
+                                <label for="ad-new-cap">定員</label>
+                                <input type="number" id="ad-new-cap" value="15" min="1" max="100">
+                            </div>
+                            <label class="bk-check">
+                                <input type="checkbox" id="ad-new-absent">
+                                <span>この日は育児相談会がお休み</span>
+                            </label>
+                            <button type="submit" class="btn btn-primary btn-sm">追加する</button>
+                        </form>
+                    </div>
+
+                    <div class="bk-panel">
+                        <div class="ad-month-nav">
+                            <button type="button" id="ad-prev" class="btn btn-outline btn-sm">前の月</button>
+                            <strong id="ad-month-label"></strong>
+                            <button type="button" id="ad-next" class="btn btn-outline btn-sm">次の月</button>
+                        </div>
+                        <div id="ad-slots"></div>
+                    </div>
+                </div>
+
+                <!-- お申込み -->
+                <div id="ad-panel-tickets" hidden>
+                    <div class="bk-panel">
+                        <div class="ad-month-nav">
+                            <strong>お申込み一覧 <span id="ad-ticket-count"></span></strong>
+                            <button type="button" id="ad-export" class="btn btn-outline btn-sm">CSVで出力</button>
+                        </div>
+                        <div id="ad-tickets"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                なかむらバイオリン教室 &nbsp;|&nbsp; &copy; 2026 高松音楽と暮らしの教室. All Rights Reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../src/admin.js"></script>
+</body>
+
+</html>

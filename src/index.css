@@ -2883,3 +2883,189 @@ ul {
   color: var(--uguisu);
   flex-shrink: 0;
 }
+
+/* ==============================
+   ADMIN (限定公開ページ)
+   ============================== */
+.ad-login {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.ad-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.ad-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.ad-tab {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 9px 18px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--white);
+  cursor: pointer;
+}
+
+.ad-tab--on {
+  background: var(--uguisu);
+  border-color: var(--uguisu);
+  color: var(--white);
+  font-weight: 700;
+}
+
+.ad-bar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.ad-month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.ad-add {
+  display: grid;
+  gap: 10px;
+}
+
+.ad-slot,
+.ad-ticket {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+
+.ad-slot--closed {
+  opacity: 0.55;
+}
+
+.ad-slot-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.92rem;
+  margin-bottom: 8px;
+}
+
+.ad-slot-count {
+  font-size: 0.8rem;
+  color: var(--uguisu);
+  font-weight: 700;
+}
+
+.ad-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.ad-tag {
+  font-size: 0.68rem;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--bg-alt);
+  color: var(--charcoal-light);
+}
+
+.ad-tag--warn {
+  background: #f6e7e5;
+  color: #a4433a;
+}
+
+.ad-tag--ok {
+  background: var(--uguisu);
+  color: var(--white);
+}
+
+.ad-attendees {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.ad-name {
+  font-size: 0.8rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--uguisu);
+  color: var(--white);
+}
+
+.ad-name--unpaid {
+  background: var(--bg-alt);
+  color: var(--charcoal);
+  border: 1px dashed var(--border);
+}
+
+.ad-empty {
+  font-size: 0.78rem;
+  color: var(--charcoal-light);
+}
+
+.ad-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ad-dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 16px;
+  font-size: 0.82rem;
+  margin-bottom: 10px;
+}
+
+.ad-dl dt {
+  color: var(--charcoal-light);
+  font-size: 0.72rem;
+  padding-top: 2px;
+}
+
+.ad-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.ad-date {
+  font-size: 0.75rem;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--bg-alt);
+}
+
+.ad-note {
+  font-size: 0.8rem;
+  background: var(--bg-alt);
+  border-radius: 6px;
+  padding: 9px 12px;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 600px) {
+  .ad-dl {
+    grid-template-columns: 5.5em 1fr;
+  }
+}
