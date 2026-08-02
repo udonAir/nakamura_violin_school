@@ -91,7 +91,7 @@
     var p1 = $('#ad-newpass1').value;
     var p2 = $('#ad-newpass2').value;
     if (p1 !== p2) { err.textContent = 'パスワードが一致しません。'; return; }
-    if (p1.length < 12) { err.textContent = 'パスワードは12文字以上にしてください。'; return; }
+    if (p1.length < 8) { err.textContent = 'パスワードは8文字以上にしてください。'; return; }
 
     cognito('RespondToAuthChallenge', {
       ChallengeName: 'NEW_PASSWORD_REQUIRED',
