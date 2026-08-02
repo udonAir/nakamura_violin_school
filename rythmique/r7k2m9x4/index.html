@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>リトミック 参加予定日のお申込み | なかむらバイオリン教室</title>
+    <!-- 限定公開ページ。検索結果に出さない -->
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600&family=Zen+Maru+Gothic:wght@300;400;500;700&family=La+Belle+Aurore&display=swap" rel="stylesheet">
+    <link rel="icon" href="../../assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../../src/index.css">
+</head>
+
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header class="header">
+        <div class="container">
+            <a href="../../" class="logo">
+                なかむらバイオリン教室
+                <small>高松音楽と暮らしの教室</small>
+            </a>
+        </div>
+    </header>
+
+    <!-- ===== PAGE HERO ===== -->
+    <div class="page-hero">
+        <div class="container">
+            <div class="page-hero-text">
+                <div class="page-hero-badge">リトミック教室</div>
+                <h1>参加予定日のお申込み</h1>
+                <p class="page-hero-sub">回数券の種類を選び、参加予定日をお選びください。<br>
+                    お申込み後、内容の控えを画面に表示します。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 体験の方向けの案内 ===== -->
+    <section class="section">
+        <div class="container">
+            <div class="bk-notice">
+                <strong>はじめての方へ</strong>
+                <p>このページは、すでに教室にお通いの方のお申込み用です。<br>
+                    はじめてご参加の方は、まず無料体験レッスンへお申し込みください。</p>
+                <a id="bk-trial-link" href="#" target="_blank" rel="noopener" class="btn btn-outline btn-sm">無料体験を申し込む</a>
+            </div>
+
+            <!-- ===== 控え表示（?ticket=... でアクセスしたとき） ===== -->
+            <div id="bk-lookup" class="bk-panel" hidden>
+                <h2 class="bk-head">お申込み内容の控え</h2>
+                <div id="bk-lookup-body"></div>
+            </div>
+
+            <!-- ===== 申込フォーム ===== -->
+            <div id="bk-form-section">
+                <form id="bk-form" novalidate>
+
+                    <!-- STEP 1 -->
+                    <div class="bk-panel">
+                        <h2 class="bk-head"><span class="bk-step">1</span>クラスとお申込み内容</h2>
+
+                        <fieldset class="bk-fieldset">
+                            <legend>クラス</legend>
+                            <label class="bk-radio">
+                                <input type="radio" name="ageClass" value="age0_2" checked>
+                                <span>0〜2歳（単発 2,500円／回）</span>
+                            </label>
+                            <label class="bk-radio">
+                                <input type="radio" name="ageClass" value="age3_5">
+                                <span>3〜5歳（単発 3,000円／回）</span>
+                            </label>
+                            <p class="bk-hint">3歳までは前半、4歳からは後半の枠をお選びください。</p>
+                        </fieldset>
+
+                        <fieldset class="bk-fieldset">
+                            <legend>お申込みの種類</legend>
+                            <label class="bk-radio">
+                                <input type="radio" name="purchaseType" value="ticket" checked>
+                                <span>回数券（3ヶ月間有効）</span>
+                            </label>
+                            <label class="bk-radio">
+                                <input type="radio" name="purchaseType" value="single">
+                                <span>単発レッスン</span>
+                            </label>
+                        </fieldset>
+
+                        <fieldset class="bk-fieldset" id="bk-ticket-type-row">
+                            <legend>回数券の種類</legend>
+                            <label class="bk-radio">
+                                <input type="radio" name="ticketType" value="6" checked>
+                                <span>6回券</span>
+                            </label>
+                            <label class="bk-radio">
+                                <input type="radio" name="ticketType" value="7">
+                                <span>7回券</span>
+                            </label>
+                            <label class="bk-radio">
+                                <input type="radio" name="ticketType" value="8">
+                                <span>8回券</span>
+                            </label>
+                        </fieldset>
+
+                        <fieldset class="bk-fieldset" id="bk-single-count-row" hidden>
+                            <legend>回数</legend>
+                            <select id="bk-single-count" class="bk-select">
+                                <option value="1">1回</option>
+                                <option value="2">2回</option>
+                                <option value="3">3回</option>
+                            </select>
+                        </fieldset>
+
+                        <label class="bk-check">
+                            <input type="checkbox" id="bk-firsttime" checked>
+                            <span>はじめてのお申込みです（入会金 1,000円）</span>
+                        </label>
+                    </div>
+
+                    <!-- STEP 2 -->
+                    <div class="bk-panel">
+                        <h2 class="bk-head"><span class="bk-step">2</span>参加予定日</h2>
+                        <div class="bk-summary">
+                            <span>選択中 <strong id="bk-count">0 / 6 日</strong></span>
+                            <span>お支払い予定 <strong id="bk-amount">13,500円</strong></span>
+                        </div>
+                        <p id="bk-select-msg" class="bk-select-msg">あと6日、参加予定日をお選びください。</p>
+                        <p id="bk-calendar-status" class="bk-hint"></p>
+                        <div id="bk-calendar"></div>
+                        <p class="bk-hint">※回数券の有効期限は3ヶ月です。期限を超える日は選択できません。</p>
+                    </div>
+
+                    <!-- STEP 3 -->
+                    <div class="bk-panel">
+                        <h2 class="bk-head"><span class="bk-step">3</span>お申込み者情報</h2>
+
+                        <div class="bk-field">
+                            <label for="bk-guardian">保護者のお名前 <span class="bk-required">必須</span></label>
+                            <input type="text" id="bk-guardian" required autocomplete="name" maxlength="50">
+                        </div>
+                        <div class="bk-field">
+                            <label for="bk-child">お子様のお名前 <span class="bk-required">必須</span></label>
+                            <input type="text" id="bk-child" required maxlength="50">
+                        </div>
+                        <div class="bk-field">
+                            <label for="bk-birth">お子様の生年月</label>
+                            <input type="month" id="bk-birth">
+                        </div>
+                        <div class="bk-field">
+                            <label for="bk-email">メールアドレス <span class="bk-required">必須</span></label>
+                            <input type="email" id="bk-email" required autocomplete="email" maxlength="254">
+                        </div>
+                        <div class="bk-field">
+                            <label for="bk-tel">お電話番号 <span class="bk-required">必須</span></label>
+                            <input type="tel" id="bk-tel" required autocomplete="tel" maxlength="20">
+                        </div>
+                        <div class="bk-field">
+                            <label for="bk-note">ご連絡事項（任意）</label>
+                            <textarea id="bk-note" rows="3" maxlength="1000"></textarea>
+                        </div>
+
+                        <label class="bk-check">
+                            <input type="checkbox" id="bk-photo">
+                            <span>ブログ・ホームページ・SNSへのお写真の掲載に同意します（任意）</span>
+                        </label>
+
+                        <!-- ボット避け。利用者には見えない -->
+                        <div class="bk-honeypot" aria-hidden="true">
+                            <label for="bk-website">Website</label>
+                            <input type="text" id="bk-website" tabindex="-1" autocomplete="off">
+                        </div>
+
+                        <div class="bk-privacy">
+                            <strong>個人情報の取扱いについて</strong>
+                            <p>お預かりした個人情報は、ご連絡・ご案内などの目的以外には使用せず、第三者に開示することはございません。</p>
+                        </div>
+
+                        <p id="bk-error" class="bk-error" role="alert"></p>
+                        <button type="submit" id="bk-submit" class="btn btn-primary btn-primary--lg" disabled>この内容で申し込む</button>
+                        <p class="bk-hint">※お支払いは従来どおり、教室にて現金または振込でお願いいたします。</p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ===== 送信完了 ===== -->
+            <div id="bk-receipt" class="bk-panel bk-panel--done" hidden>
+                <h2 class="bk-head">お申込みを受け付けました</h2>
+                <p>ありがとうございます。以下の内容で承りました。</p>
+
+                <dl class="bk-receipt-list">
+                    <dt>お支払い金額</dt>
+                    <dd id="bk-receipt-amount"></dd>
+                    <dt>有効期間</dt>
+                    <dd id="bk-receipt-period"></dd>
+                </dl>
+
+                <h3 class="bk-subhead">参加予定日</h3>
+                <ul id="bk-receipt-dates" class="bk-date-list"></ul>
+
+                <div class="bk-receipt-url">
+                    <strong>この控えのURL</strong>
+                    <p>後から内容を確認できます。このページをブックマークするか、URLを保存してください。</p>
+                    <a id="bk-receipt-link" href="#"></a>
+                </div>
+
+                <p class="bk-hint">※お支払いは教室にて現金または振込でお願いいたします。<br>
+                    ※参加日の変更をご希望の場合は、事前に教室までご連絡ください。</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                なかむらバイオリン教室 &nbsp;|&nbsp; &copy; 2026 高松音楽と暮らしの教室. All Rights Reserved.
+            </div>
+        </div>
+    </footer>
+
+    <script src="../../src/booking.js"></script>
+</body>
+
+</html>
