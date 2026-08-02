@@ -2548,83 +2548,122 @@ ul {
   font-weight: 700;
 }
 
-.bk-month {
-  margin-bottom: 24px;
+.bk-cal {
+  margin-bottom: 26px;
 }
 
-.bk-month-title {
+.bk-cal-title {
   font-family: var(--font-serif);
-  font-size: 0.95rem;
-  padding-bottom: 6px;
+  font-size: 1rem;
+  text-align: center;
+  padding-bottom: 8px;
+  margin-bottom: 8px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 10px;
 }
 
-.bk-slot-list {
+.bk-cal-grid {
   display: grid;
-  gap: 8px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
 }
 
-.bk-slot {
+.bk-cal-wd {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--charcoal-light);
+  padding: 4px 0;
+}
+
+.bk-cal-wd--sun { color: #c07a72; }
+.bk-cal-wd--sat { color: #7a8ba8; }
+
+.bk-cal-cell {
+  aspect-ratio: 1;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  border: 1px solid var(--border);
+  justify-content: center;
+  font-size: 0.85rem;
   border-radius: 8px;
-  padding: 13px 16px;
+}
+
+.bk-cal-cell--blank {
+  visibility: hidden;
+}
+
+.bk-cal-cell--off {
+  color: var(--charcoal-light);
+  opacity: 0.35;
+}
+
+/* 開講日＝押せるボタン */
+.bk-cal-day {
+  position: relative;
+  font-family: inherit;
+  border: 1.5px solid var(--uguisu);
+  background: var(--white);
+  color: var(--charcoal);
   cursor: pointer;
-  transition: border-color 0.2s, background 0.2s;
+  gap: 1px;
+  transition: background 0.15s, transform 0.1s;
 }
 
-.bk-slot:hover {
-  border-color: var(--uguisu);
-}
-
-.bk-slot:has(input:checked) {
-  border-color: var(--uguisu);
+.bk-cal-day:hover:not(:disabled) {
   background: var(--bg-alt);
 }
 
-.bk-slot--full,
-.bk-slot:has(input:disabled) {
-  opacity: 0.5;
-  cursor: not-allowed;
+.bk-cal-day:active:not(:disabled) {
+  transform: scale(0.95);
 }
 
-.bk-slot-main {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px 14px;
-  flex: 1;
-}
-
-.bk-slot-date {
+.bk-cal-num {
+  font-size: 0.95rem;
   font-weight: 700;
-  font-size: 0.92rem;
+  line-height: 1.1;
 }
 
-.bk-slot-time {
-  font-size: 0.82rem;
+.bk-cal-meta {
+  font-size: 0.6rem;
   color: var(--charcoal-light);
+  line-height: 1;
 }
 
-.bk-slot-meta {
-  font-size: 0.78rem;
+.bk-cal-mark {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 0.55rem;
   color: var(--uguisu);
-  margin-left: auto;
 }
 
-.bk-slot-meta--full {
-  color: var(--charcoal-light);
+/* 選択中 */
+.bk-cal-day--on {
+  background: var(--uguisu);
+  border-color: var(--uguisu);
+  color: var(--white);
 }
 
-.bk-slot-note {
-  flex-basis: 100%;
-  font-size: 0.75rem;
+.bk-cal-day--on .bk-cal-meta,
+.bk-cal-day--on .bk-cal-mark {
+  color: var(--white);
+}
+
+/* 満席・上限到達で押せない */
+.bk-cal-day:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.bk-cal-day--full {
+  border-style: dashed;
+}
+
+.bk-cal-legend {
+  font-size: 0.72rem;
   color: var(--charcoal-light);
-  line-height: 1.6;
+  margin-top: 4px;
+  line-height: 1.7;
 }
 
 .bk-field {
@@ -2665,14 +2704,6 @@ ul {
   border-radius: 3px;
   margin-left: 6px;
   vertical-align: middle;
-}
-
-.bk-honeypot {
-  position: absolute;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
 }
 
 .bk-privacy {
@@ -2762,8 +2793,16 @@ ul {
     padding: 20px 18px;
   }
 
-  .bk-slot-meta {
-    margin-left: 0;
+  .bk-cal-grid {
+    gap: 3px;
+  }
+
+  .bk-cal-num {
+    font-size: 0.85rem;
+  }
+
+  .bk-cal-meta {
+    font-size: 0.55rem;
   }
 
   .bk-receipt-list {

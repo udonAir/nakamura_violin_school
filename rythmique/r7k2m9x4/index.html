@@ -111,49 +111,30 @@
                                 <option value="3">3回</option>
                             </select>
                         </fieldset>
-
-                        <label class="bk-check">
-                            <input type="checkbox" id="bk-firsttime" checked>
-                            <span>はじめてのお申込みです（入会金 1,000円）</span>
-                        </label>
                     </div>
 
                     <!-- STEP 2 -->
                     <div class="bk-panel">
                         <h2 class="bk-head"><span class="bk-step">2</span>参加予定日</h2>
+                        <p class="bk-hint">お選びいただける期間：<strong id="bk-period"></strong></p>
                         <div class="bk-summary">
                             <span>選択中 <strong id="bk-count">0 / 6 日</strong></span>
-                            <span>お支払い予定 <strong id="bk-amount">13,500円</strong></span>
+                            <span>お支払い予定 <strong id="bk-amount">12,500円</strong></span>
                         </div>
                         <p id="bk-select-msg" class="bk-select-msg">あと6日、参加予定日をお選びください。</p>
                         <p id="bk-calendar-status" class="bk-hint"></p>
                         <div id="bk-calendar"></div>
-                        <p class="bk-hint">※回数券の有効期限は3ヶ月です。期限を超える日は選択できません。</p>
+                        <p class="bk-cal-legend">★ … 育児のお悩み相談会はお休みの日（リトミックは通常どおり開講します）</p>
+                        <ul id="bk-selected" class="bk-date-list"></ul>
                     </div>
 
                     <!-- STEP 3 -->
                     <div class="bk-panel">
-                        <h2 class="bk-head"><span class="bk-step">3</span>お申込み者情報</h2>
+                        <h2 class="bk-head"><span class="bk-step">3</span>お申込み内容の確認</h2>
 
-                        <div class="bk-field">
-                            <label for="bk-guardian">保護者のお名前 <span class="bk-required">必須</span></label>
-                            <input type="text" id="bk-guardian" required autocomplete="name" maxlength="50">
-                        </div>
                         <div class="bk-field">
                             <label for="bk-child">お子様のお名前 <span class="bk-required">必須</span></label>
                             <input type="text" id="bk-child" required maxlength="50">
-                        </div>
-                        <div class="bk-field">
-                            <label for="bk-birth">お子様の生年月</label>
-                            <input type="month" id="bk-birth">
-                        </div>
-                        <div class="bk-field">
-                            <label for="bk-email">メールアドレス <span class="bk-required">必須</span></label>
-                            <input type="email" id="bk-email" required autocomplete="email" maxlength="254">
-                        </div>
-                        <div class="bk-field">
-                            <label for="bk-tel">お電話番号 <span class="bk-required">必須</span></label>
-                            <input type="tel" id="bk-tel" required autocomplete="tel" maxlength="20">
                         </div>
                         <div class="bk-field">
                             <label for="bk-note">ご連絡事項（任意）</label>
@@ -165,12 +146,6 @@
                             <span>ブログ・ホームページ・SNSへのお写真の掲載に同意します（任意）</span>
                         </label>
 
-                        <!-- ボット避け。利用者には見えない -->
-                        <div class="bk-honeypot" aria-hidden="true">
-                            <label for="bk-website">Website</label>
-                            <input type="text" id="bk-website" tabindex="-1" autocomplete="off">
-                        </div>
-
                         <div class="bk-privacy">
                             <strong>個人情報の取扱いについて</strong>
                             <p>お預かりした個人情報は、ご連絡・ご案内などの目的以外には使用せず、第三者に開示することはございません。</p>
@@ -178,7 +153,8 @@
 
                         <p id="bk-error" class="bk-error" role="alert"></p>
                         <button type="submit" id="bk-submit" class="btn btn-primary btn-primary--lg" disabled>この内容で申し込む</button>
-                        <p class="bk-hint">※お支払いは従来どおり、教室にて現金または振込でお願いいたします。</p>
+                        <p class="bk-hint">※お支払いは従来どおり、教室にて現金または振込でお願いいたします。<br>
+                            ※はじめての方は、別途入会金1,000円を申し受けます。</p>
                     </div>
                 </form>
             </div>

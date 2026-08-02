@@ -6,7 +6,6 @@
   var TRIAL_FORM_URL =
     'https://docs.google.com/forms/d/1D1GHXF9IeXEmMy0lBG19rGpgoC9d2AB9rEwnRlm72jE/viewform';
 
-  var ADMISSION_FEE = 1000;
   var TICKET_PRICES = {
     age0_2: { 6: 12500, 7: 13000, 8: 13500 },
     age3_5: { 6: 17000, 7: 17500, 8: 18000 }
@@ -21,48 +20,53 @@
     ageClass: 'age0_2',
     purchaseType: 'ticket',
     ticketType: 6,
-    isFirstTime: true
+    validFrom: '',
+    validTo: ''
   };
 
   var $ = function (sel) { return document.querySelector(sel); };
 
-  function requiredCount() {
-    return state.ticketType;
-  }
+  function pad(n) { return String(n).padStart(2, '0'); }
 
-  function formatYen(n) {
-    return n.toLocaleString('ja-JP') + '円';
-  }
+  function formatYen(n) { return n.toLocaleString('ja-JP') + '円'; }
 
   function estimateAmount() {
-    var base =
-      state.purchaseType === 'single'
-        ? SINGLE_PRICES[state.ageClass] * state.ticketType
-        : TICKET_PRICES[state.ageClass][state.ticketType];
-    return base + (state.isFirstTime ? ADMISSION_FEE : 0);
+    return state.purchaseType === 'single'
+      ? SINGLE_PRICES[state.ageClass] * state.ticketType
+      : TICKET_PRICES[state.ageClass][state.ticketType];
+  }
+
+  /**
+   * 選択できる期間＝申込日の翌月1日から3ヶ月間。
+   * サーバ側でも同じ判定を行う（ここでの計算は表示用）。
+   */
+  function calcPeriod() {
+    var now = new Date();
+    var y = now.getFullYear();
+    var m = now.getMonth(); // 0始まり
+    var from = new Date(y, m + 1, 1);
+    var to = new Date(y, m + 4, 0);
+    return {
+      validFrom: from.getFullYear() + '-' + pad(from.getMonth() + 1) + '-01',
+      validTo: to.getFullYear() + '-' + pad(to.getMonth() + 1) + '-' + pad(to.getDate())
+    };
   }
 
   /* ===== 開講枠の読み込み ===== */
 
-  function currentMonth() {
-    var d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-  }
-
-  function addMonths(month, n) {
-    var parts = month.split('-');
-    var y = Number(parts[0]);
-    var m = Number(parts[1]) + n;
-    y += Math.floor((m - 1) / 12);
-    m = ((m - 1) % 12) + 1;
-    return y + '-' + String(m).padStart(2, '0');
-  }
-
   function loadSlots() {
-    var from = currentMonth();
-    var to = addMonths(from, 7);
+    var p = calcPeriod();
+    state.validFrom = p.validFrom;
+    state.validTo = p.validTo;
+
+    $('#bk-period').textContent =
+      Number(p.validFrom.slice(5, 7)) + '月 〜 ' + Number(p.validTo.slice(5, 7)) + '月';
+
     var status = $('#bk-calendar-status');
     status.textContent = '開講日を読み込んでいます…';
+
+    var from = p.validFrom.slice(0, 7);
+    var to = p.validTo.slice(0, 7);
 
     fetch(API_BASE + '/slots?from=' + from + '&to=' + to)
       .then(function (res) {
@@ -70,9 +74,8 @@
         return res.json();
       })
       .then(function (data) {
-        var today = new Date().toISOString().slice(0, 10);
         state.slots = (data.slots || []).filter(function (s) {
-          return s.date >= today && s.status === 'open';
+          return s.status === 'open' && s.date >= p.validFrom && s.date <= p.validTo;
         });
         status.textContent = '';
         renderCalendar();
@@ -85,112 +88,160 @@
 
   /* ===== カレンダー描画 ===== */
 
+  function slotByDate(date) {
+    for (var i = 0; i < state.slots.length; i++) {
+      if (state.slots[i].date === date) return state.slots[i];
+    }
+    return null;
+  }
+
+  function monthsInPeriod() {
+    var months = [];
+    var start = state.validFrom.slice(0, 7).split('-');
+    var y = Number(start[0]);
+    var m = Number(start[1]);
+    var end = state.validTo.slice(0, 7);
+    while (true) {
+      var cur = y + '-' + pad(m);
+      months.push(cur);
+      if (cur === end) break;
+      m += 1;
+      if (m > 12) { m = 1; y += 1; }
+    }
+    return months;
+  }
+
   function renderCalendar() {
     var wrap = $('#bk-calendar');
     wrap.innerHTML = '';
 
     if (state.slots.length === 0) {
-      $('#bk-calendar-status').textContent = '現在ご予約可能な開講日がありません。';
+      $('#bk-calendar-status').textContent =
+        'この期間にご予約可能な開講日がありません。教室までお問い合わせください。';
       return;
     }
 
-    var byMonth = {};
-    state.slots.forEach(function (s) {
-      var m = s.date.slice(0, 7);
-      (byMonth[m] = byMonth[m] || []).push(s);
-    });
-
-    Object.keys(byMonth).sort().forEach(function (month) {
-      var group = document.createElement('div');
-      group.className = 'bk-month';
-
-      var h = document.createElement('h4');
-      h.className = 'bk-month-title';
-      h.textContent = month.split('-')[0] + '年' + Number(month.split('-')[1]) + '月';
-      group.appendChild(h);
-
-      var list = document.createElement('div');
-      list.className = 'bk-slot-list';
-
-      byMonth[month].forEach(function (slot) {
-        list.appendChild(renderSlot(slot));
-      });
-
-      group.appendChild(list);
-      wrap.appendChild(group);
+    monthsInPeriod().forEach(function (month) {
+      wrap.appendChild(renderMonth(month));
     });
 
     updateSelectionUI();
   }
 
-  function renderSlot(slot) {
-    var d = new Date(slot.date + 'T00:00:00+09:00');
-    var label = document.createElement('label');
-    label.className = 'bk-slot';
-    if (slot.full) label.classList.add('bk-slot--full');
+  function renderMonth(month) {
+    var parts = month.split('-');
+    var year = Number(parts[0]);
+    var mon = Number(parts[1]);
 
-    var input = document.createElement('input');
-    input.type = 'checkbox';
-    input.value = slot.slotId;
-    input.disabled = !!slot.full;
-    input.addEventListener('change', onSlotToggle);
+    var box = document.createElement('div');
+    box.className = 'bk-cal';
 
-    var main = document.createElement('span');
-    main.className = 'bk-slot-main';
+    var title = document.createElement('div');
+    title.className = 'bk-cal-title';
+    title.textContent = year + '年 ' + mon + '月';
+    box.appendChild(title);
 
-    var date = document.createElement('span');
-    date.className = 'bk-slot-date';
-    date.textContent =
-      Number(slot.date.slice(5, 7)) + '月' + Number(slot.date.slice(8, 10)) + '日（' +
-      WEEKDAYS[d.getDay()] + '）';
+    var grid = document.createElement('div');
+    grid.className = 'bk-cal-grid';
 
-    var time = document.createElement('span');
-    time.className = 'bk-slot-time';
-    time.textContent = slot.startTime + '〜' + slot.endTime;
+    WEEKDAYS.forEach(function (w, i) {
+      var head = document.createElement('div');
+      head.className = 'bk-cal-wd';
+      if (i === 0) head.classList.add('bk-cal-wd--sun');
+      if (i === 6) head.classList.add('bk-cal-wd--sat');
+      head.textContent = w;
+      grid.appendChild(head);
+    });
 
-    main.appendChild(date);
-    main.appendChild(time);
+    var first = new Date(year, mon - 1, 1);
+    var lastDay = new Date(year, mon, 0).getDate();
 
-    var meta = document.createElement('span');
-    meta.className = 'bk-slot-meta';
-    if (slot.full) {
-      meta.textContent = '満席';
-      meta.classList.add('bk-slot-meta--full');
-    } else {
-      meta.textContent = '残り' + slot.remaining + '名';
-    }
-    main.appendChild(meta);
-
-    label.appendChild(input);
-    label.appendChild(main);
-
-    if (slot.counselorAbsent) {
-      var note = document.createElement('span');
-      note.className = 'bk-slot-note';
-      note.textContent = '※この日は育児のお悩み相談会はお休みです（リトミックは通常どおり開講）';
-      label.appendChild(note);
+    for (var b = 0; b < first.getDay(); b++) {
+      var blank = document.createElement('div');
+      blank.className = 'bk-cal-cell bk-cal-cell--blank';
+      grid.appendChild(blank);
     }
 
-    return label;
+    for (var d = 1; d <= lastDay; d++) {
+      grid.appendChild(renderDay(year + '-' + pad(mon) + '-' + pad(d), d));
+    }
+
+    box.appendChild(grid);
+    return box;
   }
 
-  function onSlotToggle(e) {
-    var id = e.target.value;
-    if (e.target.checked) {
-      if (state.selected.length >= requiredCount()) {
-        e.target.checked = false;
-        return;
-      }
-      state.selected.push(id);
+  function renderDay(date, dayNum) {
+    var slot = slotByDate(date);
+
+    if (!slot) {
+      var cell = document.createElement('div');
+      cell.className = 'bk-cal-cell bk-cal-cell--off';
+      cell.textContent = dayNum;
+      return cell;
+    }
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'bk-cal-cell bk-cal-day';
+    btn.dataset.slotId = slot.slotId;
+    btn.setAttribute('aria-pressed', 'false');
+
+    var num = document.createElement('span');
+    num.className = 'bk-cal-num';
+    num.textContent = dayNum;
+    btn.appendChild(num);
+
+    var meta = document.createElement('span');
+    meta.className = 'bk-cal-meta';
+    if (slot.full) {
+      meta.textContent = '満席';
+      btn.disabled = true;
+      btn.classList.add('bk-cal-day--full');
     } else {
-      state.selected = state.selected.filter(function (v) { return v !== id; });
+      meta.textContent = '残' + slot.remaining;
+    }
+    btn.appendChild(meta);
+
+    var label = date + ' ' + slot.startTime + '〜' + slot.endTime;
+    if (slot.counselorAbsent) {
+      var mark = document.createElement('span');
+      mark.className = 'bk-cal-mark';
+      mark.textContent = '★';
+      btn.appendChild(mark);
+      label += '（育児相談会はお休み）';
+    }
+    btn.setAttribute('aria-label', label);
+
+    btn.addEventListener('click', function () { toggleDay(btn, slot); });
+    return btn;
+  }
+
+  function toggleDay(btn, slot) {
+    var idx = state.selected.indexOf(slot.slotId);
+    if (idx >= 0) {
+      state.selected.splice(idx, 1);
+    } else {
+      if (state.selected.length >= state.ticketType) return;
+      state.selected.push(slot.slotId);
     }
     updateSelectionUI();
   }
 
   function updateSelectionUI() {
-    var need = requiredCount();
+    var need = state.ticketType;
     var got = state.selected.length;
+
+    Array.prototype.forEach.call(
+      document.querySelectorAll('.bk-cal-day'),
+      function (btn) {
+        var on = state.selected.indexOf(btn.dataset.slotId) >= 0;
+        btn.classList.toggle('bk-cal-day--on', on);
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        if (!btn.classList.contains('bk-cal-day--full')) {
+          btn.disabled = !on && got >= need;
+        }
+      }
+    );
 
     $('#bk-count').textContent = got + ' / ' + need + ' 日';
     $('#bk-amount').textContent = formatYen(estimateAmount());
@@ -204,23 +255,37 @@
       msg.className = 'bk-select-msg bk-select-msg--done';
     }
 
-    // 上限に達したら未選択のチェックボックスを無効化する
-    var inputs = document.querySelectorAll('#bk-calendar input[type=checkbox]');
-    Array.prototype.forEach.call(inputs, function (i) {
-      var slot = state.slots.filter(function (s) { return s.slotId === i.value; })[0];
-      if (slot && slot.full) return;
-      i.disabled = !i.checked && got >= need;
-    });
-
+    renderSelectedList();
     $('#bk-submit').disabled = got !== need;
+  }
+
+  function renderSelectedList() {
+    var ul = $('#bk-selected');
+    ul.innerHTML = '';
+    state.selected
+      .slice()
+      .sort()
+      .forEach(function (id) {
+        var slot = state.slots.filter(function (s) { return s.slotId === id; })[0];
+        if (!slot) return;
+        var li = document.createElement('li');
+        li.textContent = formatDateJa(slot.date) + ' ' + slot.startTime + '〜';
+        ul.appendChild(li);
+      });
+  }
+
+  function formatDateJa(date) {
+    var d = new Date(date + 'T00:00:00+09:00');
+    return (
+      Number(date.slice(5, 7)) + '月' + Number(date.slice(8, 10)) + '日（' +
+      WEEKDAYS[d.getDay()] + '）'
+    );
   }
 
   /* ===== 選択条件の変更 ===== */
 
   function resetSelection() {
     state.selected = [];
-    var inputs = document.querySelectorAll('#bk-calendar input[type=checkbox]');
-    Array.prototype.forEach.call(inputs, function (i) { i.checked = false; });
     updateSelectionUI();
   }
 
@@ -240,26 +305,26 @@
   function onSubmit(e) {
     e.preventDefault();
 
-    var btn = $('#bk-submit');
+    var childName = $('#bk-child').value.trim();
     var errorBox = $('#bk-error');
+    if (!childName) {
+      errorBox.textContent = 'お子様のお名前を入力してください。';
+      return;
+    }
+
+    var btn = $('#bk-submit');
     errorBox.textContent = '';
     btn.disabled = true;
     btn.textContent = '送信中…';
 
     var payload = {
-      guardianName: $('#bk-guardian').value,
-      childName: $('#bk-child').value,
-      childBirthMonth: $('#bk-birth').value || undefined,
-      email: $('#bk-email').value,
-      tel: $('#bk-tel').value,
+      childName: childName,
       ageClass: state.ageClass,
       purchaseType: state.purchaseType,
       ticketType: state.ticketType,
-      isFirstTime: $('#bk-firsttime').checked,
       photoConsent: $('#bk-photo').checked,
       slotIds: state.selected,
-      note: $('#bk-note').value,
-      website: $('#bk-website').value
+      note: $('#bk-note').value
     };
 
     fetch(API_BASE + '/tickets', {
@@ -277,8 +342,7 @@
           errorBox.textContent = r.data.message || '送信に失敗しました。時間をおいてお試しください。';
           btn.disabled = false;
           btn.textContent = 'この内容で申し込む';
-          // 満席エラーのときは最新の空き状況を取り直す
-          if (r.status === 409) loadSlots();
+          if (r.status === 409) { resetSelection(); loadSlots(); }
           return;
         }
         showReceipt(r.data);
@@ -301,14 +365,12 @@
     ul.innerHTML = '';
     (data.dates || []).forEach(function (d) {
       var li = document.createElement('li');
-      var dt = new Date(d + 'T00:00:00+09:00');
-      li.textContent =
-        d.slice(0, 4) + '年' + Number(d.slice(5, 7)) + '月' + Number(d.slice(8, 10)) +
-        '日（' + WEEKDAYS[dt.getDay()] + '）';
+      li.textContent = d.slice(0, 4) + '年' + formatDateJa(d);
       ul.appendChild(li);
     });
 
-    var url = location.origin + location.pathname + '?ticket=' + data.ticketId + '&token=' + data.token;
+    var url =
+      location.origin + location.pathname + '?ticket=' + data.ticketId + '&token=' + data.token;
     var link = $('#bk-receipt-link');
     link.href = url;
     link.textContent = url;
@@ -324,7 +386,10 @@
     var box = $('#bk-lookup-body');
     box.textContent = '読み込んでいます…';
 
-    fetch(API_BASE + '/tickets/' + encodeURIComponent(ticketId) + '?token=' + encodeURIComponent(token))
+    fetch(
+      API_BASE + '/tickets/' + encodeURIComponent(ticketId) +
+        '?token=' + encodeURIComponent(token)
+    )
       .then(function (res) {
         if (!res.ok) throw new Error('not found');
         return res.json();
@@ -333,14 +398,15 @@
         box.innerHTML = '';
         var dl = document.createElement('dl');
         dl.className = 'bk-receipt-list';
-        var rows = [
-          ['お名前', t.childName + '（保護者：' + t.guardianName + '）'],
-          ['お申込み', t.purchaseType === 'single' ? '単発レッスン ' + t.ticketType + '回' : t.ticketType + '回券'],
+        [
+          ['お名前', t.childName],
+          ['お申込み', t.purchaseType === 'single'
+            ? '単発レッスン ' + t.ticketType + '回'
+            : t.ticketType + '回券'],
           ['お支払い金額', formatYen(t.amount)],
           ['有効期間', t.validFrom + ' 〜 ' + t.validTo],
           ['お手続き状況', t.status === 'paid' ? 'お支払い確認済み' : '受付済み（お支払い前）']
-        ];
-        rows.forEach(function (r) {
+        ].forEach(function (r) {
           var dt = document.createElement('dt');
           dt.textContent = r[0];
           var dd = document.createElement('dd');
@@ -359,17 +425,13 @@
         ul.className = 'bk-date-list';
         t.reservations.forEach(function (r) {
           var li = document.createElement('li');
-          var dt2 = new Date(r.date + 'T00:00:00+09:00');
-          li.textContent =
-            r.date.slice(0, 4) + '年' + Number(r.date.slice(5, 7)) + '月' +
-            Number(r.date.slice(8, 10)) + '日（' + WEEKDAYS[dt2.getDay()] + '）';
+          li.textContent = r.date.slice(0, 4) + '年' + formatDateJa(r.date);
           ul.appendChild(li);
         });
         box.appendChild(ul);
       })
       .catch(function () {
-        box.textContent =
-          'お申込みが見つかりませんでした。URLが正しいかご確認ください。';
+        box.textContent = 'お申込みが見つかりませんでした。URLが正しいかご確認ください。';
       });
   }
 
@@ -414,11 +476,6 @@
     $('#bk-single-count').addEventListener('change', function () {
       state.ticketType = Number(this.value);
       resetSelection();
-    });
-
-    $('#bk-firsttime').addEventListener('change', function () {
-      state.isFirstTime = this.checked;
-      updateSelectionUI();
     });
 
     $('#bk-form').addEventListener('submit', onSubmit);
