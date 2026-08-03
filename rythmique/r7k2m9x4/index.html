@@ -88,13 +88,16 @@
 
                     <!-- 確認コード入力 -->
                     <form id="bk-confirm-form" class="bk-auth-form" hidden>
-                        <p class="bk-hint">メールに届いた確認コードを入力してください。</p>
+                        <p class="bk-hint">メールに届いた確認コードを入力してください。<br>
+                            <strong>メールが見当たらない場合は、迷惑メールフォルダをご確認ください。</strong></p>
                         <div class="bk-field">
                             <label for="bk-confirm-code">確認コード</label>
                             <input type="text" id="bk-confirm-code" required inputmode="numeric" autocomplete="one-time-code">
                         </div>
                         <p id="bk-confirm-error" class="bk-error" role="alert"></p>
+                        <p id="bk-confirm-info" class="bk-select-msg" hidden></p>
                         <button type="submit" id="bk-confirm-btn" class="btn btn-primary">登録を完了する</button>
+                        <button type="button" id="bk-resend-btn" class="bk-linkbtn">確認コードを再送する</button>
                     </form>
 
                     <!-- パスワード再設定 -->

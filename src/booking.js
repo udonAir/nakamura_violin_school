@@ -96,6 +96,8 @@
     }
     if (/already exists/.test(msg)) return 'このメールアドレスはすでに登録されています。ログインしてください。';
     if (/Invalid verification code/.test(msg)) return '確認コードが違います。';
+    if (/already confirmed/.test(msg)) return 'すでにご登録が完了しています。ログインしてください。';
+    if (/Invalid code provided|ExpiredCode/.test(msg)) return '確認コードが違うか、有効期限が切れています。';
     if (/Password did not conform/.test(msg)) return 'パスワードは8文字以上で、英字と数字を含めてください。';
     if (/Attempt limit exceeded/.test(msg)) return '回数の上限に達しました。しばらく時間をおいてお試しください。';
     return msg || 'エラーが発生しました。';
@@ -1240,13 +1242,61 @@
       UserAttributes: [{ Name: 'email', Value: auth.signupEmail }]
     })
       .then(function () {
-        $('#bk-signup-form').hidden = true;
-        $('#bk-confirm-form').hidden = false;
+        showConfirmForm();
       })
-      .catch(function (e2) { err.textContent = e2.message; })
+      .catch(function (e2) {
+        // 登録済みだが未確認のまま画面を閉じた場合、ここに来る。
+        // 登録し直せないので、コードを送り直して確認画面へ進ませる。
+        if (/すでに登録されています/.test(e2.message)) {
+          return resendCode()
+            .then(function () {
+              showConfirmForm('確認コードを送り直しました。メールをご確認ください。');
+            })
+            .catch(function () {
+              err.textContent =
+                'このメールアドレスはすでにご登録済みです。ログインしてください。';
+            });
+        }
+        err.textContent = e2.message;
+      })
       .then(function () {
         btn.disabled = false;
         btn.textContent = '確認コードを送る';
+      });
+  }
+
+  function showConfirmForm(info) {
+    $('#bk-signup-form').hidden = true;
+    $('#bk-confirm-form').hidden = false;
+    var box = $('#bk-confirm-info');
+    box.hidden = !info;
+    box.textContent = info || '';
+  }
+
+  function resendCode() {
+    return cognito('ResendConfirmationCode', {
+      ClientId: CLIENT_ID,
+      Username: auth.signupEmail
+    });
+  }
+
+  function onResend() {
+    var btn = $('#bk-resend-btn');
+    var err = $('#bk-confirm-error');
+    var info = $('#bk-confirm-info');
+    err.textContent = '';
+    btn.disabled = true;
+    btn.textContent = '送信中…';
+
+    resendCode()
+      .then(function () {
+        info.hidden = false;
+        info.textContent = '確認コードを送り直しました。メールをご確認ください。';
+      })
+      .catch(function (e) { err.textContent = e.message; })
+      .then(function () {
+        btn.disabled = false;
+        btn.textContent = '確認コードを再送する';
       });
   }
 
@@ -1335,6 +1385,7 @@
     $('#bk-login-form').addEventListener('submit', onLogin);
     $('#bk-signup-form').addEventListener('submit', onSignup);
     $('#bk-confirm-form').addEventListener('submit', onConfirm);
+    $('#bk-resend-btn').addEventListener('click', onResend);
     $('#bk-forgot-form').addEventListener('submit', onForgot);
     $('#bk-forgot-link').addEventListener('click', function () {
       $('#bk-login-form').hidden = true;
