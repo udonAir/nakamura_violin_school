@@ -69,6 +69,7 @@
                     <div class="ad-tabs">
                         <button type="button" class="ad-tab ad-tab--on" data-tab="slots">開講日</button>
                         <button type="button" class="ad-tab" data-tab="tickets">お申込み</button>
+                        <button type="button" class="ad-tab" data-tab="qr">出席QR</button>
                     </div>
                     <div class="ad-bar-actions">
                         <button type="button" id="ad-reload" class="btn btn-outline btn-sm">再読み込み</button>
@@ -114,6 +115,21 @@
                     </div>
                 </div>
 
+                <!-- 出席QR -->
+                <div id="ad-panel-qr" hidden>
+                    <div class="bk-panel">
+                        <h2 class="bk-head">出席用QRコード</h2>
+                        <p class="bk-hint">
+                            レッスン中はこの画面を教室に置いてください。<br>
+                            保護者の方がQRを読み取り、ログインして「出席」を押すと出席が記録されます。<br>
+                            <strong>QRは数分ごとに自動で切り替わります。</strong>画像を撮って持ち帰っても、
+                            あとから出席を押すことはできません。
+                        </p>
+                        <div id="ad-qr" class="ad-qr"></div>
+                        <p id="ad-qr-status" class="bk-hint"></p>
+                    </div>
+                </div>
+
                 <!-- お申込み -->
                 <div id="ad-panel-tickets" hidden>
                     <div class="bk-panel">
@@ -137,6 +153,7 @@
         </div>
     </footer>
 
+    <script src="../../src/vendor/qrcode.js"></script>
     <script src="../../src/admin.js"></script>
 </body>
 

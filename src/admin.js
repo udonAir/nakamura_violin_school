@@ -196,12 +196,7 @@
         names.innerHTML = '<span class="ad-empty">予約なし</span>';
       } else {
         s.attendees.forEach(function (a) {
-          var n = document.createElement('span');
-          n.className = 'ad-name';
-          if (a.status !== 'paid') n.classList.add('ad-name--unpaid');
-          n.textContent = a.childName;
-          n.title = a.status === 'paid' ? '入金済' : '未入金';
-          names.appendChild(n);
+          names.appendChild(attendeeRow(s, a));
         });
       }
       card.appendChild(names);
@@ -240,6 +235,62 @@
 
       box.appendChild(card);
     });
+  }
+
+  var RES_LABEL = { attended: '出席', absent: '欠席', scheduled: '予定', cancelled: '取消' };
+
+  /**
+   * 出席予定者の1行。
+   * 「出席」は保護者がQRから押す。押されないまま終了時刻を過ぎたものは
+   * サーバー側が欠席として返す（レコードには書かれない）。
+   * ここでは押し忘れの救済として、手で直せるようにしている。
+   */
+  function attendeeRow(slot, a) {
+    var row = document.createElement('div');
+    row.className = 'ad-attendee ad-attendee--' + a.status;
+
+    var n = document.createElement('span');
+    n.className = 'ad-name';
+    n.textContent = a.childName;
+    row.appendChild(n);
+
+    var st = document.createElement('span');
+    st.className = 'ad-tag ad-tag--' + (a.status === 'attended' ? 'ok' : a.status === 'absent' ? 'warn' : '');
+    st.textContent = RES_LABEL[a.status] || a.status;
+    row.appendChild(st);
+
+    if (a.status !== 'cancelled') {
+      row.appendChild(
+        btn(a.status === 'attended' ? '出席を取消' : '出席にする', function () {
+          patchReservation(a.ticketId, a.slotId, a.status === 'attended' ? 'scheduled' : 'attended');
+        })
+      );
+    }
+    // 当日の急病などで来られなかった方に、教室から振替を付与する
+    if (a.status === 'absent') {
+      row.appendChild(
+        btn('振替を付与', function () {
+          if (!window.confirm(a.childName + ' さんに振替を1回付与します。よろしいですか？')) return;
+          api('/admin/makeups', {
+            method: 'POST',
+            body: JSON.stringify({ ticketId: a.ticketId, date: slot.date })
+          })
+            .then(function (d) { alert('振替を付与しました。' + d.expiresAt + ' まで有効です。'); })
+            .catch(function (e) { alert(e.message); });
+        })
+      );
+    }
+
+    return row;
+  }
+
+  function patchReservation(ticketId, slotId, status) {
+    api(
+      '/admin/reservations/' + encodeURIComponent(ticketId) + '/' + encodeURIComponent(slotId),
+      { method: 'PATCH', body: JSON.stringify({ status: status }) }
+    )
+      .then(loadSlots)
+      .catch(function (e) { alert(e.message); });
   }
 
   function tag(text, cls) {
@@ -340,15 +391,13 @@
 
       var st = document.createElement('span');
       st.className = 'ad-tag';
-      if (t.status === 'paid') {
-        st.textContent = '入金済';
-        st.classList.add('ad-tag--ok');
-      } else if (t.status === 'cancelled') {
-        st.textContent = 'キャンセル';
+      // 入金の管理はしない（現金をレッスン当日に受け取るため）
+      if (t.status === 'cancelled') {
+        st.textContent = '取消';
         st.classList.add('ad-tag--warn');
       } else {
-        st.textContent = '未入金';
-        st.classList.add('ad-tag--warn');
+        st.textContent = '有効';
+        st.classList.add('ad-tag--ok');
       }
       head.appendChild(st);
       card.appendChild(head);
@@ -360,6 +409,7 @@
         ['内容', (t.purchaseType === 'single' ? '単発 ' : '') + t.ticketType + (t.purchaseType === 'single' ? '回' : '回券')],
         ['金額', formatYen(t.amount)],
         ['有効期間', t.validFrom + ' 〜 ' + t.validTo],
+        ['振替利用', t.usedMakeup ? 'あり（1回分を追加）' : 'なし'],
         ['生年月日', t.birthDate || '—'],
         ['メール', t.email],
         ['申込日', (t.createdAt || '').slice(0, 10)]
@@ -392,13 +442,13 @@
 
       var acts = document.createElement('div');
       acts.className = 'ad-actions';
-      if (t.status !== 'paid') {
-        acts.appendChild(btn('入金済にする', function () {
-          patchTicket(t.ticketId, 'paid');
-        }));
-      } else {
-        acts.appendChild(btn('未入金に戻す', function () {
-          patchTicket(t.ticketId, 'pending');
+      if (t.status !== 'cancelled') {
+        acts.appendChild(btn('申込を取り消す', function () {
+          if (!window.confirm(
+            t.childName + ' さんのお申込みを取り消します。\n' +
+            'これからの回の席は空きに戻ります。よろしいですか？'
+          )) return;
+          cancelTicket(t.ticketId);
         }));
       }
       card.appendChild(acts);
@@ -407,13 +457,53 @@
     });
   }
 
-  function patchTicket(ticketId, status) {
+  function cancelTicket(ticketId) {
     api('/admin/tickets/' + encodeURIComponent(ticketId), {
       method: 'PATCH',
-      body: JSON.stringify({ status: status })
+      body: JSON.stringify({ status: 'cancelled' })
     })
       .then(function () { loadTickets(); loadSlots(); })
       .catch(function (e) { alert(e.message); });
+  }
+
+  /* ===== 出席用QR ===== */
+
+  var qrTimer = null;
+  var QR_PAGE = location.origin + '/rythmique/r7k2m9x4/';
+
+  function startQr() {
+    stopQr();
+    refreshQr();
+  }
+
+  function stopQr() {
+    if (qrTimer) { clearTimeout(qrTimer); qrTimer = null; }
+  }
+
+  function refreshQr() {
+    api('/admin/qr')
+      .then(function (d) {
+        drawQr(QR_PAGE + '?qr=' + encodeURIComponent(d.token));
+        $('#ad-qr-status').textContent =
+          '最終更新 ' + new Date().toLocaleTimeString('ja-JP') +
+          '（約' + Math.round(d.refreshSec / 60) + '分ごとに自動更新）';
+        // 切り替わる少し前に取り直す
+        qrTimer = setTimeout(refreshQr, Math.max(30, d.refreshSec - 20) * 1000);
+      })
+      .catch(function (e) {
+        $('#ad-qr-status').textContent = e.message;
+        qrTimer = setTimeout(refreshQr, 30000);
+      });
+  }
+
+  function drawQr(url) {
+    var box = $('#ad-qr');
+    box.innerHTML = '';
+    // typeNumber 0 = 必要な大きさを自動で決める。誤り訂正レベルは M。
+    var qr = window.qrcode(0, 'M');
+    qr.addData(url);
+    qr.make();
+    box.innerHTML = qr.createSvgTag({ cellSize: 8, margin: 8, scalable: true });
   }
 
   function exportCsv() {
@@ -454,6 +544,9 @@
         t.classList.add('ad-tab--on');
         $('#ad-panel-slots').hidden = t.dataset.tab !== 'slots';
         $('#ad-panel-tickets').hidden = t.dataset.tab !== 'tickets';
+        $('#ad-panel-qr').hidden = t.dataset.tab !== 'qr';
+        // 表示しているときだけ更新を回す
+        if (t.dataset.tab === 'qr') { startQr(); } else { stopQr(); }
       });
     });
 

@@ -26,14 +26,18 @@
 - 申込時の自動メール通知（先生宛）と控えメール（保護者宛）
 - 先生用管理画面：開講日の登録・編集、申込一覧の閲覧、CSV出力
 
-### フェーズ2以降（本書の対象外・拡張可能な設計にする）
-- 保護者による予定日の変更申請
-- 振替（1回まで）の自動管理
+### フェーズ2（2026-08 の改定で実装済み）
+- 保護者アカウント（Cognito）とマイページ
+- 保護者による予定日・回数・コースの変更
+- QRコードによる出席記録と、欠席の自動判定
+- 振替（1人1回まで）の管理と、次の購入時の充当
+
+### フェーズ3以降（本書の対象外・拡張可能な設計にする）
 - 残回数の自動計算
 - オンライン決済
 
 ### 非スコープ（当面やらない）
-- 決済。**代金は従来どおり現金・振込**とする。
+- 決済。**代金は現金のみ**とする（振込は行わない）。初回レッスン時に教室で受け取る。
 - バイオリン／ピアノ教室の予約。将来同じ基盤に載せられる設計にはする。
 
 ## 3. アーキテクチャ
@@ -46,14 +50,16 @@
         │ HTTPS (CORS: https://nakamura-violin.com のみ許可)
         ↓
 [API Gateway (HTTP API)] api.nakamura-violin.com
-   ├ 公開エンドポイント    … 開講枠取得 / 申込登録 / 控え表示
-   └ 認証エンドポイント    … 管理API（Cognito JWT オーソライザ）
+   ├ 公開エンドポイント    … 開講枠取得 / 選べる開始月の一覧
+   ├ 保護者エンドポイント  … 申込・変更・出席（保護者プールの JWT オーソライザ）
+   └ 管理エンドポイント    … 管理API（管理者プールの JWT オーソライザ）
         ↓
-[Lambda (Node.js)]  バリデーション / 定員チェック / トークン発行
+[Lambda (Node.js)]  バリデーション / 定員チェック / 出欠・振替の管理
         ↓
 [DynamoDB] violin-booking     ← 個人情報はここだけ。インターネット非公開。
 [SES]                          ← 通知メール・控えメール
-[Cognito User Pool]            ← 先生アカウント（1〜2名）
+[Cognito User Pool] × 2        ← 保護者用 と 先生用（発行者が違うため分ける）
+[Secrets Manager]              ← 出席用QRの署名鍵
 ```
 
 **個人情報は GitHub リポジトリに一切保存しない。** リポジトリに含まれるのは
@@ -155,7 +161,9 @@ GSI2（管理画面の申込一覧を新しい順に引く）
   "GSI2PK": "TICKET",
   "GSI2SK": "2026-08-02T14:05:00Z",
   "ticketId": "01J8...",
-  "tokenHash": "sha256:...",      // 控えURL用。生トークンは保存しない
+  "userSub": "e4f1...",           // Cognito の sub。メールでは紐づけない
+  "GSI3PK": "USER#e4f1...",       // 利用者から自分の申込を引く
+  "GSI3SK": "2026-08-01",         // = validFrom
   "guardianName": "中村 花子",
   "childName": "中村 太郎",
   "childBirthMonth": "2024-05",
@@ -168,8 +176,10 @@ GSI2（管理画面の申込一覧を新しい順に引く）
   "amount": 14500,                // 13500 + 入会金1000
   "validFrom": "2026-08-01",
   "validTo": "2026-10-31",        // 3ヶ月有効
-  "status": "pending",            // pending | confirmed | paid | cancelled
-  "makeupUsed": false,            // 振替1回枠の消化フラグ（フェーズ2で使用）
+  "firstLessonDate": "2026-08-09",// 変更期限の基準。日程変更でも動かさない
+  "dates": ["2026-08-09", "..."], // 参加予定日の写し（一覧を1クエリで返すため）
+  "status": "active",             // active | cancelled（入金状態は管理しない）
+  "usedMakeup": false,            // 振替権利を使って買ったか
   "photoConsent": true,           // SNS等への掲載可否（規定に記載あり）
   "createdAt": "2026-08-02T14:05:00Z"
 }
@@ -224,33 +234,58 @@ PDF に合わせて修正済み。
 } ] }
 ```
 
-#### `POST /tickets`
-回数券の申込。リクエストに `ticketType`, `ageClass`, 保護者情報, `slotIds[]`,
-`photoConsent`, CAPTCHAトークンを含む。
+#### `GET /purchase-options`
+選べる「ご利用開始月」の一覧。各月について、有効期間内に残っている
+空きのある開講日の数をコース別に返す。回数分の日程が残っていない月は
+回数券ではなく単発レッスンで対応してもらう。
 
-**サーバ側バリデーション（規定 PDF より）**
-1. `slotIds.length === ticketType`（券種の回数と選択日数が一致。単発は1件）
-2. `slotIds` に重複がない
-3. 全ての枠が存在し `status === "open"`
-4. 全ての枠の日付が `validFrom`〜`validTo`（3ヶ月）の範囲内（単発は該当なし）
-5. 各枠が定員未満（`reservedCount < capacity`、定員15名）
-6. CAPTCHA 検証を通過
+#### `POST /tickets`（要ログイン）
+回数券の申込。リクエストに `startMonth`, `ticketType`, `ageClass`, お子様の情報,
+`slotIds[]`, `photoConsent`, `useMakeup` を含む。保護者の氏名・メールは
+JWT のクレームから取る（クライアントの申告は使わない）。
+
+**サーバ側バリデーション**
+1. `startMonth` が形式どおりで、過去の月でない（有効期間はここから3ヶ月）
+2. `slotIds.length === ticketType`（振替権利を使う場合は +1）
+3. `slotIds` に重複がない
+4. 全ての枠が存在し `status === "open"`
+5. 全ての枠の日付が `validFrom`〜`validTo` の範囲内で、**当日・過去でない**
+   （開始月を選べるため、有効期間内でも過ぎた開講日がありうる）
+6. 各枠が定員未満（`reservedCount < capacity`、定員15名）
 
 年齢による枠の制限は行わない（案内のみ）。
 
 書き込みは `TransactWriteItems` で以下を1トランザクションにまとめ、
-定員超過を原子的に防ぐ。
+定員超過・重複購入・振替の二重消費を原子的に防ぐ。
 - Ticket の PutItem
+- 月の占有 × 3 の PutItem（`attribute_not_exists`。回数券のみ）
+- 振替権利の DeleteItem（`useMakeup` のとき。期限も条件に入れる）
 - Reservation × N の PutItem
-- Slot × N の UpdateItem（`ADD reservedCount 1` + `ConditionExpression: reservedCount < capacity`）
+- Slot × N の UpdateItem（`reservedCount + 1` + `ConditionExpression: reservedCount < capacity`）
 
-> DynamoDB のトランザクションは1回あたり100項目まで。最大 8回券 = 1 + 8 + 8 = 17項目なので余裕がある。
+> DynamoDB のトランザクションは1回あたり100項目まで。
+> 最大（8回券＋振替1回）= 1 + 3 + 1 + 9 + 9 = 23項目なので余裕がある。
 
-成功後、SES で先生宛通知と保護者宛の控えメール（控えURL付き）を送信。
+成功後、SES で先生宛通知と保護者宛の控えメールを送信。
 
-#### `GET /tickets/{ticketId}?token=<raw>`
-申込内容の控え表示。`token` は申込時に発行するランダム32文字。
-サーバ側は SHA-256 を突き合わせて検証する。**連番IDは使わない。**
+#### `GET /tickets/{ticketId}`（要ログイン）
+申込内容の控え表示。JWT の `sub` と申込の `userSub` が一致しなければ 404 を返す
+（存在しない場合と応答を変えない）。**連番IDは使わない。**
+
+#### `GET /me`（要ログイン）
+マイページ。自分の申込一覧と、保有している振替権利を返す。
+
+#### `POST /tickets/{ticketId}/makeup`（要ログイン）
+「振替にまわす」。期間内に振替先が無い1回分を放棄して振替権利に変える。
+**前日まで**。上限は1人1回。
+
+#### `POST /attendance`（要ログイン）
+出席の記録。教室に貼ったQRを読み、ログインしたうえで保護者が押す。
+QRトークンが有効（数分で切り替わる）で、かつレッスンの時間帯
+（開始15分前〜終了時刻）であるときだけ受け付ける。
+
+> 欠席はレコードに書かない。終了時刻を過ぎても出席が押されていなければ
+> 欠席として扱う（読み取り時の判定。締めのバッチは不要）。
 
 ### 管理エンドポイント（Cognito JWT 必須）
 
@@ -261,7 +296,11 @@ PDF に合わせて修正済み。
 | PATCH | `/admin/slots/{slotId}` | 定員・時間・status の変更 |
 | DELETE | `/admin/slots/{slotId}` | 予約0件のときのみ削除可 |
 | GET | `/admin/tickets?status=&from=&to=` | 申込一覧 |
-| PATCH | `/admin/tickets/{ticketId}` | 入金確認（status を paid に）等 |
+| PATCH | `/admin/tickets/{ticketId}` | 申込の取消（status を cancelled に） |
+| PATCH | `/admin/reservations/{ticketId}/{slotId}` | 出欠の手修正（押し忘れの救済） |
+| POST | `/admin/makeups` | 振替権利の付与（当日の急病など） |
+| DELETE | `/admin/makeups/{userSub}` | 振替権利の取消 |
+| GET | `/admin/qr` | 出席用QRのトークン（数分で切り替わる） |
 | GET | `/admin/export.csv` | 申込のCSV出力 |
 
 ## 7. セキュリティ要件
@@ -273,7 +312,10 @@ PDF に合わせて修正済み。
 - CloudWatch Logs に氏名・メール・電話番号を出力しない（`ticketId` のみ記録）
 - API Gateway にスロットリング（バースト/レート上限）を設定
 - 申込フォームに CAPTCHA（hCaptcha 等）を設置していたずら投稿を防ぐ
-- 控えURLのトークンは推測不能な32文字ランダム。DBにはハッシュのみ保存
+- 保護者の本人確認は Cognito（保護者プール）。JWT の `sub` と申込の `userSub` を照合する。
+  存在しない申込と他人の申込とで応答を変えない（どちらも404）
+- 出席用QRの署名鍵は Secrets Manager に置き、環境変数に入れない
+  （CloudFormation テンプレートに平文で残るため）
 - 管理画面は Cognito User Pool + MFA。先生アカウントのみ
 - フォームに個人情報の利用目的を明示し、プライバシーポリシーへリンクする
   （PDF「個人情報の取扱いについて」の内容をWeb化して掲載）

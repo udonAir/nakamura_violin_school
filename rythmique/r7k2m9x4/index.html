@@ -33,156 +33,275 @@
                 <div class="page-hero-badge">リトミック教室</div>
                 <h1>参加予定日のお申込み</h1>
                 <p class="page-hero-sub">回数券の種類を選び、参加予定日をお選びください。<br>
-                    お申込み後、内容の控えを画面に表示します。</p>
+                    お申込み内容はマイページからいつでもご確認いただけます。</p>
             </div>
         </div>
     </div>
 
-    <!-- ===== 体験の方向けの案内 ===== -->
     <section class="section">
         <div class="container">
-            <div id="bk-notice" class="bk-notice">
-                <strong>はじめての方へ</strong>
-                <p>このページは、すでに教室にお通いの方のお申込み用です。<br>
-                    はじめてご参加の方は、まず無料体験レッスンへお申し込みください。</p>
-                <a id="bk-trial-link" href="#" target="_blank" rel="noopener" class="btn btn-outline btn-sm">無料体験を申し込む</a>
-            </div>
 
-            <!-- ===== 控え表示（?ticket=... でアクセスしたとき） ===== -->
-            <div id="bk-lookup" class="bk-panel" hidden>
-                <h2 class="bk-head">お申込み内容</h2>
-                <div id="bk-lookup-body"></div>
-            </div>
-
-            <!-- ===== 申込フォーム ===== -->
-            <div id="bk-form-section">
-                <form id="bk-form" novalidate>
-
-                    <!-- STEP 1 -->
-                    <div class="bk-panel">
-                        <h2 class="bk-head"><span class="bk-step">1</span>クラスとお申込み内容</h2>
-
-                        <fieldset class="bk-fieldset">
-                            <legend>コース</legend>
-                            <label class="bk-radio">
-                                <input type="radio" name="ageClass" value="age0_3" checked>
-                                <span>0〜3歳コース</span>
-                            </label>
-                            <label class="bk-radio">
-                                <input type="radio" name="ageClass" value="age4_5">
-                                <span>4〜5歳コース</span>
-                            </label>
-                        </fieldset>
-
-                        <fieldset class="bk-fieldset">
-                            <legend>お申込みの種類</legend>
-                            <label class="bk-radio">
-                                <input type="radio" name="purchaseType" value="ticket" checked>
-                                <span>回数券（3ヶ月間有効）</span>
-                            </label>
-                            <label class="bk-radio">
-                                <input type="radio" name="purchaseType" value="single">
-                                <span>単発レッスン</span>
-                            </label>
-                        </fieldset>
-
-                        <fieldset class="bk-fieldset" id="bk-ticket-type-row">
-                            <legend>回数券の種類</legend>
-                            <label class="bk-radio">
-                                <input type="radio" name="ticketType" value="6" checked>
-                                <span>6回券</span>
-                            </label>
-                            <label class="bk-radio">
-                                <input type="radio" name="ticketType" value="7">
-                                <span>7回券</span>
-                            </label>
-                            <label class="bk-radio">
-                                <input type="radio" name="ticketType" value="8">
-                                <span>8回券</span>
-                            </label>
-                        </fieldset>
-
-                        <fieldset class="bk-fieldset" id="bk-single-count-row" hidden>
-                            <legend>回数</legend>
-                            <select id="bk-single-count" class="bk-select">
-                                <option value="1">1回</option>
-                                <option value="2">2回</option>
-                                <option value="3">3回</option>
-                            </select>
-                        </fieldset>
-                    </div>
-
-                    <!-- STEP 2 -->
-                    <div class="bk-panel">
-                        <h2 class="bk-head"><span class="bk-step">2</span>参加予定日</h2>
-                        <p class="bk-hint">お選びいただける期間：<strong id="bk-period"></strong><br>
-                            レッスン時間：<strong id="bk-time"></strong></p>
-                        <div class="bk-summary">
-                            <span>選択中 <strong id="bk-count">0 / 6 日</strong></span>
-                            <span>お支払い予定 <strong id="bk-amount">12,500円</strong></span>
-                        </div>
-                        <p class="bk-pay-note">お支払いは初回レッスン時に現金でお支払いをお願いします</p>
-                        <p id="bk-select-msg" class="bk-select-msg">あと6日、参加予定日をお選びください。</p>
-                        <p id="bk-calendar-status" class="bk-hint"></p>
-                        <div id="bk-calendar"></div>
-                        <p class="bk-cal-legend">★ … 育児のお悩み相談会はお休みの日（リトミックは通常どおり開講します）</p>
-                    </div>
-
-                    <!-- STEP 3 -->
-                    <div class="bk-panel">
-                        <h2 class="bk-head"><span class="bk-step">3</span>お申込み内容の確認</h2>
-
-                        <div class="bk-field">
-                            <label for="bk-child">お子様のお名前 <span class="bk-required">必須</span></label>
-                            <input type="text" id="bk-child" required maxlength="50">
-                        </div>
-                        <div class="bk-field">
-                            <label for="bk-birth">お子様の生年月日 <span class="bk-required">必須</span></label>
-                            <input type="date" id="bk-birth" required>
-                        </div>
-                        <div class="bk-field">
-                            <label for="bk-email">メールアドレス <span class="bk-required">必須</span></label>
-                            <input type="email" id="bk-email" required autocomplete="email" maxlength="254">
-                        </div>
-                        <div class="bk-field">
-                            <label for="bk-note">ご連絡事項（任意）</label>
-                            <textarea id="bk-note" rows="3" maxlength="1000"></textarea>
-                        </div>
-
-                        <div class="bk-privacy">
-                            <strong>個人情報の取扱いについて</strong>
-                            <p>お預かりした個人情報は、ご連絡・ご案内などの目的以外には使用せず、第三者に開示することはございません。</p>
-                        </div>
-
-                        <p id="bk-error" class="bk-error" role="alert"></p>
-                        <button type="submit" id="bk-submit" class="btn btn-primary btn-primary--lg" disabled>この内容で申し込む</button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- ===== 送信完了 ===== -->
-            <div id="bk-receipt" class="bk-panel bk-panel--done" hidden>
-                <h2 class="bk-head">お申込みを受け付けました</h2>
-                <p>ありがとうございます。以下の内容で承りました。</p>
-
-                <dl class="bk-receipt-list">
-                    <dt>お支払い金額</dt>
-                    <dd id="bk-receipt-amount"></dd>
-                    <dt>有効期間</dt>
-                    <dd id="bk-receipt-period"></dd>
-                </dl>
-
-                <h3 class="bk-subhead">参加予定日</h3>
-                <ul id="bk-receipt-dates" class="bk-date-list"></ul>
-
-                <div class="bk-receipt-url">
-                    <strong>この控えのURL</strong>
-                    <p>後から内容を確認できます。このページをブックマークするか、URLを保存してください。</p>
-                    <a id="bk-receipt-link" href="#"></a>
+            <!-- ===== ログイン・新規登録 ===== -->
+            <div id="bk-auth" hidden>
+                <div id="bk-notice" class="bk-notice">
+                    <strong>はじめての方へ</strong>
+                    <p>このページは、すでに教室にお通いの方のお申込み用です。<br>
+                        はじめてご参加の方は、まず無料体験レッスンへお申し込みください。</p>
+                    <a id="bk-trial-link" href="#" target="_blank" rel="noopener" class="btn btn-outline btn-sm">無料体験を申し込む</a>
                 </div>
 
-                <p class="bk-hint">※お支払いは教室にて現金または振込でお願いいたします。<br>
-                    ※参加日の変更をご希望の場合は、事前に教室までご連絡ください。</p>
+                <div class="bk-panel">
+                    <div class="bk-tabs">
+                        <button type="button" class="bk-tab bk-tab--on" data-auth="login">ログイン</button>
+                        <button type="button" class="bk-tab" data-auth="signup">はじめて登録する</button>
+                    </div>
+
+                    <!-- ログイン -->
+                    <form id="bk-login-form" class="bk-auth-form">
+                        <div class="bk-field">
+                            <label for="bk-login-email">メールアドレス</label>
+                            <input type="email" id="bk-login-email" required autocomplete="email">
+                        </div>
+                        <div class="bk-field">
+                            <label for="bk-login-pass">パスワード</label>
+                            <input type="password" id="bk-login-pass" required autocomplete="current-password">
+                        </div>
+                        <p id="bk-login-error" class="bk-error" role="alert"></p>
+                        <button type="submit" id="bk-login-btn" class="btn btn-primary">ログイン</button>
+                        <button type="button" id="bk-forgot-link" class="bk-linkbtn">パスワードをお忘れの方</button>
+                    </form>
+
+                    <!-- 新規登録 -->
+                    <form id="bk-signup-form" class="bk-auth-form" hidden>
+                        <p class="bk-hint">ご登録のメールアドレスに確認コードをお送りします。</p>
+                        <div class="bk-field">
+                            <label for="bk-signup-email">メールアドレス</label>
+                            <input type="email" id="bk-signup-email" required autocomplete="email">
+                        </div>
+                        <div class="bk-field">
+                            <label for="bk-signup-pass">パスワード（8文字以上・英字と数字を含む）</label>
+                            <input type="password" id="bk-signup-pass" required autocomplete="new-password">
+                        </div>
+                        <p id="bk-signup-error" class="bk-error" role="alert"></p>
+                        <button type="submit" id="bk-signup-btn" class="btn btn-primary">確認コードを送る</button>
+                    </form>
+
+                    <!-- 確認コード入力 -->
+                    <form id="bk-confirm-form" class="bk-auth-form" hidden>
+                        <p class="bk-hint">メールに届いた確認コードを入力してください。</p>
+                        <div class="bk-field">
+                            <label for="bk-confirm-code">確認コード</label>
+                            <input type="text" id="bk-confirm-code" required inputmode="numeric" autocomplete="one-time-code">
+                        </div>
+                        <p id="bk-confirm-error" class="bk-error" role="alert"></p>
+                        <button type="submit" id="bk-confirm-btn" class="btn btn-primary">登録を完了する</button>
+                    </form>
+
+                    <!-- パスワード再設定 -->
+                    <form id="bk-forgot-form" class="bk-auth-form" hidden>
+                        <p class="bk-hint">ご登録のメールアドレスに再設定用のコードをお送りします。</p>
+                        <div class="bk-field">
+                            <label for="bk-forgot-email">メールアドレス</label>
+                            <input type="email" id="bk-forgot-email" required autocomplete="email">
+                        </div>
+                        <div id="bk-forgot-step2" hidden>
+                            <div class="bk-field">
+                                <label for="bk-forgot-code">確認コード</label>
+                                <input type="text" id="bk-forgot-code" inputmode="numeric" autocomplete="one-time-code">
+                            </div>
+                            <div class="bk-field">
+                                <label for="bk-forgot-pass">新しいパスワード</label>
+                                <input type="password" id="bk-forgot-pass" autocomplete="new-password">
+                            </div>
+                        </div>
+                        <p id="bk-forgot-error" class="bk-error" role="alert"></p>
+                        <button type="submit" id="bk-forgot-btn" class="btn btn-primary">コードを送る</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ===== 出席（QRから来たとき） ===== -->
+            <div id="bk-attend" class="bk-panel" hidden>
+                <h2 class="bk-head">本日の出席</h2>
+                <div id="bk-attend-body"></div>
+            </div>
+
+            <!-- ===== ログイン後 ===== -->
+            <div id="bk-app" hidden>
+                <div class="bk-userbar">
+                    <span id="bk-user-email"></span>
+                    <button type="button" id="bk-logout" class="bk-linkbtn">ログアウト</button>
+                </div>
+
+                <!-- マイページ -->
+                <div id="bk-mypage">
+                    <div class="bk-panel">
+                        <h2 class="bk-head">お子様の登録</h2>
+                        <p class="bk-hint">お申込みの前に、お通いになるお子様を登録してください。
+                            ご兄弟姉妹は続けて登録できます。</p>
+                        <div id="bk-children"></div>
+                        <form id="bk-child-form" class="bk-child-form">
+                            <div class="bk-field">
+                                <label for="bk-child-name">お子様のお名前 <span class="bk-required">必須</span></label>
+                                <input type="text" id="bk-child-name" maxlength="50">
+                            </div>
+                            <div class="bk-field">
+                                <label for="bk-child-birth">お子様の生年月日 <span class="bk-required">必須</span></label>
+                                <input type="date" id="bk-child-birth">
+                            </div>
+                            <p id="bk-child-error" class="bk-error" role="alert"></p>
+                            <button type="submit" id="bk-child-save" class="btn btn-outline">この内容で登録する</button>
+                            <button type="button" id="bk-child-cancel" class="bk-linkbtn" hidden>やめる</button>
+                        </form>
+                    </div>
+
+                    <div class="bk-panel">
+                        <h2 class="bk-head">お申込み状況</h2>
+                        <div id="bk-makeup" class="bk-makeup" hidden></div>
+                        <div id="bk-tickets">読み込んでいます…</div>
+                        <button type="button" id="bk-new" class="btn btn-primary">新しく申し込む</button>
+                    </div>
+                </div>
+
+                <!-- 申込の詳細・変更 -->
+                <div id="bk-detail" hidden>
+                    <button type="button" class="bk-linkbtn bk-back" data-back="mypage">← お申込み状況にもどる</button>
+                    <div class="bk-panel">
+                        <h2 class="bk-head">お申込み内容</h2>
+                        <div id="bk-detail-body"></div>
+                    </div>
+                </div>
+
+                <!-- ===== 申込フォーム ===== -->
+                <div id="bk-form-section" hidden>
+                    <button type="button" class="bk-linkbtn bk-back" data-back="mypage">← お申込み状況にもどる</button>
+                    <form id="bk-form" novalidate>
+
+                        <!-- STEP 1 -->
+                        <div class="bk-panel">
+                            <h2 class="bk-head"><span class="bk-step">1</span>クラスとお申込み内容</h2>
+
+                            <fieldset class="bk-fieldset">
+                                <legend>コース</legend>
+                                <label class="bk-radio">
+                                    <input type="radio" name="ageClass" value="age0_3" checked>
+                                    <span>0〜3歳コース</span>
+                                </label>
+                                <label class="bk-radio">
+                                    <input type="radio" name="ageClass" value="age4_5">
+                                    <span>4〜5歳コース</span>
+                                </label>
+                            </fieldset>
+
+                            <fieldset class="bk-fieldset">
+                                <legend>お申込みの種類</legend>
+                                <label class="bk-radio">
+                                    <input type="radio" name="purchaseType" value="ticket" checked>
+                                    <span>回数券（3ヶ月間有効）</span>
+                                </label>
+                                <label class="bk-radio">
+                                    <input type="radio" name="purchaseType" value="single">
+                                    <span>単発レッスン</span>
+                                </label>
+                            </fieldset>
+
+                            <fieldset class="bk-fieldset" id="bk-ticket-type-row">
+                                <legend>回数券の種類</legend>
+                                <label class="bk-radio">
+                                    <input type="radio" name="ticketType" value="6" checked>
+                                    <span>6回券</span>
+                                </label>
+                                <label class="bk-radio">
+                                    <input type="radio" name="ticketType" value="7">
+                                    <span>7回券</span>
+                                </label>
+                                <label class="bk-radio">
+                                    <input type="radio" name="ticketType" value="8">
+                                    <span>8回券</span>
+                                </label>
+                            </fieldset>
+
+                            <fieldset class="bk-fieldset" id="bk-single-count-row" hidden>
+                                <legend>回数</legend>
+                                <select id="bk-single-count" class="bk-select">
+                                    <option value="1">1回</option>
+                                    <option value="2">2回</option>
+                                    <option value="3">3回</option>
+                                </select>
+                            </fieldset>
+
+                            <div class="bk-field">
+                                <label for="bk-start-month">ご利用を始める月</label>
+                                <select id="bk-start-month" class="bk-select"></select>
+                                <p class="bk-hint" id="bk-start-hint"></p>
+                            </div>
+
+                            <label class="bk-check" id="bk-makeup-row" hidden>
+                                <input type="checkbox" id="bk-use-makeup">
+                                <span id="bk-makeup-label"></span>
+                            </label>
+                        </div>
+
+                        <!-- STEP 2 -->
+                        <div class="bk-panel">
+                            <h2 class="bk-head"><span class="bk-step">2</span>参加予定日</h2>
+                            <p class="bk-hint">お選びいただける期間：<strong id="bk-period"></strong><br>
+                                レッスン時間：<strong id="bk-time"></strong></p>
+                            <div class="bk-summary">
+                                <span>選択中 <strong id="bk-count">0 / 6 日</strong></span>
+                                <span>お支払い予定 <strong id="bk-amount">12,500円</strong></span>
+                            </div>
+                            <p class="bk-pay-note">お支払いは初回レッスン時に現金でお支払いをお願いします</p>
+                            <p id="bk-select-msg" class="bk-select-msg">あと6日、参加予定日をお選びください。</p>
+                            <p id="bk-calendar-status" class="bk-hint"></p>
+                            <div id="bk-calendar"></div>
+                            <p class="bk-cal-legend">★ … 育児のお悩み相談会はお休みの日（リトミックは通常どおり開講します）</p>
+                        </div>
+
+                        <!-- STEP 3 -->
+                        <div class="bk-panel">
+                            <h2 class="bk-head"><span class="bk-step">3</span>お申込みの確認</h2>
+
+                            <div class="bk-field">
+                                <label for="bk-child-select">お通いになるお子様</label>
+                                <select id="bk-child-select" class="bk-select"></select>
+                                <p class="bk-hint">お子様の追加・修正は「お申込み状況」の画面から行えます。</p>
+                            </div>
+                            <div class="bk-field">
+                                <label for="bk-note">ご連絡事項（任意）</label>
+                                <textarea id="bk-note" rows="3" maxlength="1000"></textarea>
+                            </div>
+
+                            <div class="bk-privacy">
+                                <strong>個人情報の取扱いについて</strong>
+                                <p>お預かりした個人情報は、ご連絡・ご案内などの目的以外には使用せず、第三者に開示することはございません。</p>
+                            </div>
+
+                            <p id="bk-error" class="bk-error" role="alert"></p>
+                            <button type="submit" id="bk-submit" class="btn btn-primary btn-primary--lg" disabled>この内容で申し込む</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ===== 送信完了 ===== -->
+                <div id="bk-receipt" class="bk-panel bk-panel--done" hidden>
+                    <h2 class="bk-head">お申込みを受け付けました</h2>
+                    <p>ありがとうございます。以下の内容で承りました。</p>
+
+                    <dl class="bk-receipt-list">
+                        <dt>お支払い金額</dt>
+                        <dd id="bk-receipt-amount"></dd>
+                        <dt>有効期間</dt>
+                        <dd id="bk-receipt-period"></dd>
+                    </dl>
+
+                    <h3 class="bk-subhead">参加予定日</h3>
+                    <ul id="bk-receipt-dates" class="bk-date-list"></ul>
+
+                    <p class="bk-hint">※お支払いは初回レッスン時に教室にて現金でお願いいたします。<br>
+                        ※参加日の変更は、マイページからお手続きいただけます。</p>
+                    <button type="button" class="btn btn-outline" data-back="mypage">お申込み状況を見る</button>
+                </div>
             </div>
 
         </div>
