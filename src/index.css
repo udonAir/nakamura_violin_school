@@ -3289,4 +3289,7 @@ ul {
 .ad-qr svg {
   width: min(320px, 80vw);
   height: auto;
+  max-width: 100%;
+  /* 固有サイズが取れない環境でも潰れないようにする */
+  aspect-ratio: 1 / 1;
 }

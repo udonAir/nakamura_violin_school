@@ -503,7 +503,9 @@
     var qr = window.qrcode(0, 'M');
     qr.addData(url);
     qr.make();
-    box.innerHTML = qr.createSvgTag({ cellSize: 8, margin: 8, scalable: true });
+    // scalable を付けると width/height 属性が省かれ、iOS Safari で
+    // 高さが 0 に潰れてQRが見えなくなる。固有サイズを持たせておく。
+    box.innerHTML = qr.createSvgTag({ cellSize: 8, margin: 8 });
   }
 
   function exportCsv() {
