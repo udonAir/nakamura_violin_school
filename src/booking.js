@@ -41,6 +41,7 @@
     validFrom: '',
     validTo: '',
     useMakeup: false,
+    avail: 0,
     options: [],
     children: [],
     makeup: null,
@@ -1089,19 +1090,73 @@
     // 月の途中から買うと、有効期間内でも過ぎた開講日は選べない。
     // 回数分そろわない場合は単発をご案内する。
     var avail = opt.available.first;
+    state.avail = avail;
+    syncTicketTypeLimit();
+
     var hint = $('#bk-start-hint');
+    var base = 'この開始月でお選びいただける開講日は残り' + avail + '日です。';
+    if (state.useMakeup) {
+      base += '振替の1回分を含めて日程をお選びいただきます。';
+    }
     if (avail < needCount()) {
       hint.textContent =
-        'この開始月で、これからお選びいただける開講日は残り' + avail + '日です。' +
-        '回数に足りない場合は、開始月を先にするか単発レッスンをご利用ください。';
+        base + '回数に足りないため、開始月を先にするか単発レッスンをご利用ください。';
       hint.className = 'bk-hint bk-hint--warn';
     } else {
-      hint.textContent = 'この開始月でお選びいただける開講日は残り' + avail + '日です。';
+      hint.textContent = base;
       hint.className = 'bk-hint';
     }
 
     syncCourse();
     loadFormSlots();
+  }
+
+  /**
+   * 開講日が足りない回数券を選べないようにする。
+   *
+   * 振替の1回分も「参加予定日を選ぶ対象」なので、必要日数は回数＋振替。
+   * 振替を持っている状態で8回券を買うと9日必要になり、開講日が
+   * 足りずに申込を完了できなくなる。選ばせる前に落としておく。
+   */
+  function syncTicketTypeLimit() {
+    var extra = state.useMakeup ? 1 : 0;
+    var avail = state.avail;
+    var current = null;
+    var best = null;
+
+    Array.prototype.forEach.call(
+      document.querySelectorAll('input[name=ticketType]'),
+      function (el) {
+        var n = Number(el.value);
+        var ok = n + extra <= avail;
+        el.disabled = !ok;
+        el.closest('.bk-radio').classList.toggle('bk-radio--off', !ok);
+        if (ok && (best === null || n > best.value)) best = { el: el, value: n };
+        if (el.checked) current = { el: el, value: n, ok: ok };
+      }
+    );
+
+    // 選択中のものが選べなくなったら、選べる中でいちばん多い回数へ寄せる
+    if (current && !current.ok && best) {
+      best.el.checked = true;
+      state.ticketType = best.value;
+      resetSelection();
+    }
+
+    // 単発も同様に、残り開講日を超える回数は選ばせない
+    var single = $('#bk-single-count');
+    Array.prototype.forEach.call(single.options, function (o) {
+      o.disabled = Number(o.value) > avail;
+    });
+    if (single.selectedOptions[0] && single.selectedOptions[0].disabled) {
+      for (var i = single.options.length - 1; i >= 0; i--) {
+        if (!single.options[i].disabled) { single.selectedIndex = i; break; }
+      }
+      if (state.purchaseType === 'single') {
+        state.ticketType = Number(single.value);
+        resetSelection();
+      }
+    }
   }
 
   function loadFormSlots() {
@@ -1245,6 +1300,7 @@
       $('#bk-use-makeup').checked = false;
       state.useMakeup = false;
     }
+    syncTicketTypeLimit();
     state.ticketType = isSingle
       ? Number($('#bk-single-count').value)
       : Number($('input[name=ticketType]:checked').value);
@@ -1625,6 +1681,7 @@
     $('#bk-start-month').addEventListener('change', onStartMonthChange);
     $('#bk-use-makeup').addEventListener('change', function () {
       state.useMakeup = this.checked;
+      syncTicketTypeLimit();
       resetSelection();
     });
     $('#bk-form').addEventListener('submit', onSubmit);

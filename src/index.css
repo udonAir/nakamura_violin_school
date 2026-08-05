@@ -3144,6 +3144,12 @@ ul {
   vertical-align: middle;
 }
 
+/* 開講日が足りず選べない回数券。押せないことが見て分かるようにする。 */
+.bk-radio--off {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* 姓と名を横に並べる。狭い画面では縦に落とす。 */
 .bk-namepair {
   display: flex;
