@@ -91,6 +91,13 @@
     return null;
   }
 
+  /* 前日の日付（YYYY-MM-DD）。月初を渡すと前月末が返る。 */
+  function prevDay(date) {
+    var d = new Date(date + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() - 1);
+    return d.toISOString().slice(0, 10);
+  }
+
   function needCount() {
     return state.ticketType + (state.useMakeup ? 1 : 0);
   }
@@ -557,11 +564,14 @@
     var today = todayJst();
     box.innerHTML = '';
 
+    // 回数の変更はご利用開始月の前月末（validFrom の前日）まで
+    var canChangePlan = !!t.validFrom && today < t.validFrom;
+
     var dl = document.createElement('dl');
     dl.className = 'bk-receipt-list';
     [
       ['お名前', t.childName],
-      ['コース', t.ageClass === 'age4_5' ? '4〜5歳コース' : '0〜3歳コース'],
+      ['料金区分', t.ageClass === 'age4_5' ? '4〜5歳' : '0〜3歳'],
       ['内容', (t.purchaseType === 'single' ? '単発 ' + t.ticketType + '回' : t.ticketType + '回券') +
         (t.usedMakeup ? '（振替1回を含む）' : '')],
       ['お支払い金額', formatYen(t.amount)],
@@ -571,6 +581,17 @@
       dt.textContent = r[0];
       var dd = document.createElement('dd');
       dd.textContent = r[1];
+
+      // 変更ボタンは「内容」の横に置く。何を変えるのかが一目で分かる。
+      if (r[0] === '内容' && canChangePlan) {
+        var inlineBtn = document.createElement('button');
+        inlineBtn.type = 'button';
+        inlineBtn.className = 'btn btn-outline btn-sm bk-inline-edit';
+        inlineBtn.textContent = '回数を変更';
+        inlineBtn.addEventListener('click', openPlanEditor);
+        dd.appendChild(inlineBtn);
+      }
+
       dl.appendChild(dt);
       dl.appendChild(dd);
     });
@@ -592,20 +613,14 @@
       '※当日および過去の回は、こちらからは変更できません。お急ぎの場合は教室までご連絡ください。';
     box.appendChild(note);
 
-    // 回数・コースの変更は初回レッスンの前日まで
-    if (t.firstLessonDate && today < t.firstLessonDate) {
-      var planBtn = document.createElement('button');
-      planBtn.type = 'button';
-      planBtn.className = 'btn btn-outline';
-      planBtn.textContent = '回数を変更する';
-      planBtn.addEventListener('click', openPlanEditor);
-      box.appendChild(planBtn);
-    } else {
-      var closed = document.createElement('p');
-      closed.className = 'bk-hint';
-      closed.textContent = '※初回レッスンの前日を過ぎているため、回数・コースの変更はできません。';
-      box.appendChild(closed);
-    }
+    var planNote = document.createElement('p');
+    planNote.className = 'bk-hint';
+    planNote.textContent = canChangePlan
+      ? '※回数の変更は、ご利用開始月の前月末（' + formatDateJa(prevDay(t.validFrom)) +
+        '）まで承ります。'
+      : '※回数の変更はご利用開始月の前月末までです。期限を過ぎているため、' +
+        'こちらからは変更できません。教室までご連絡ください。';
+    box.appendChild(planNote);
 
     var editor = document.createElement('div');
     editor.id = 'bk-editor';
@@ -686,12 +701,12 @@
     candidates.forEach(function (s) {
       var o = document.createElement('option');
       o.value = s.slotId;
+      // 時間帯は全枠共通になったので、コース名は出さない
       o.textContent =
         formatDateJa(s.date) + ' ' + s.startTime + '〜' + s.endTime +
-        '（' + (s.part === 'first' ? '0〜3歳' : '4〜5歳') + '・残' + s.remaining + '）';
+        '（残' + s.remaining + '）';
       sel.appendChild(o);
     });
-    syncCourse();
     editor.appendChild(sel);
 
     var err = document.createElement('p');
@@ -783,7 +798,6 @@
       if (n === t.ticketType) o.selected = true;
       sel.appendChild(o);
     });
-    syncCourse();
 
     sel.addEventListener('change', function () {
       planState.ticketType = Number(this.value);

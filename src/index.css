@@ -3137,6 +3137,13 @@ ul {
   color: #b45a3c;
 }
 
+/* 「内容」の値の横に置く変更ボタン。値と同じ行に収め、
+   何を変更するボタンなのかを離さずに示す。 */
+.bk-inline-edit {
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
 /* 姓と名を横に並べる。狭い画面では縦に落とす。 */
 .bk-namepair {
   display: flex;
