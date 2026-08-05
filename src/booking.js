@@ -17,9 +17,12 @@
   };
   var SINGLE_PRICES = { age0_3: 2500, age4_5: 3000 };
 
-  /* コースと時間枠の対応。0〜3歳は前半、4〜5歳は後半。
-     ※変更時のコースまたぎは認めているので、日程変更の候補は絞らない。 */
-  var PART_BY_AGE = { age0_3: 'first', age4_5: 'second' };
+  /* 開講しているのは前半枠（15:30-16:30）のみ。
+     後半枠は運用をやめ、既存分は status: closed にしてある。
+     コースによる時間の出し分けは無くなったので、枠は part で絞らない。 */
+
+  /* 申込の上限年齢。サーバー側の MAX_AGE と揃えること。 */
+  var MAX_AGE = 6;
 
   var WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
   var ID_KEY = 'nv_guardian_id';
@@ -31,7 +34,7 @@
     allSlots: [],
     slots: [],
     selected: [],
-    ageClass: 'age0_3',
+    ageClass: null,
     purchaseType: 'ticket',
     ticketType: 6,
     startMonth: '',
@@ -60,6 +63,30 @@
       Number(date.slice(5, 7)) + '月' + Number(date.slice(8, 10)) + '日（' +
       WEEKDAYS[d.getDay()] + '）'
     );
+  }
+
+  /* 満年齢。サーバー側の ageOn と同じ規則で数える。
+     月日を "MM-DD" のまま比べる（ゼロ埋めなので辞書順＝日付順）。 */
+  function ageOn(birthDate, asOf) {
+    var years = Number(asOf.slice(0, 4)) - Number(birthDate.slice(0, 4));
+    return asOf.slice(5) >= birthDate.slice(5) ? years : years - 1;
+  }
+
+  /* 料金区分。判定はサーバーが行うので、ここは表示のための先読み。
+     基準日は有効期間の開始日。7歳以上は null（申込不可）。 */
+  function ageClassOf(birthDate, asOf) {
+    if (!birthDate || !asOf) return null;
+    var age = ageOn(birthDate, asOf);
+    if (age < 0 || age > MAX_AGE) return null;
+    return age <= 3 ? 'age0_3' : 'age4_5';
+  }
+
+  function selectedChild() {
+    var id = $('#bk-child-select').value;
+    for (var i = 0; i < state.children.length; i++) {
+      if (state.children[i].childId === id) return state.children[i];
+    }
+    return null;
   }
 
   function needCount() {
@@ -662,6 +689,7 @@
         '（' + (s.part === 'first' ? '0〜3歳' : '4〜5歳') + '・残' + s.remaining + '）';
       sel.appendChild(o);
     });
+    syncCourse();
     editor.appendChild(sel);
 
     var err = document.createElement('p');
@@ -740,7 +768,7 @@
       '<p id="bk-edit-select-msg" class="bk-select-msg"></p>' +
       '<div id="bk-edit-calendar"></div>' +
       '<p class="bk-cal-legend">★ … 育児のお悩み相談会はお休みの日<br>' +
-      '※コース（時間帯）をまたいでお選びいただけます。</p>' +
+      '※開講日はすべて同じ時間帯（15:30〜16:30）です。</p>' +
       '<p id="bk-edit-error" class="bk-error" role="alert"></p>' +
       '<button type="button" id="bk-edit-submit" class="btn btn-primary">この内容に変更する</button>';
 
@@ -753,6 +781,7 @@
       if (n === t.ticketType) o.selected = true;
       sel.appendChild(o);
     });
+    syncCourse();
 
     sel.addEventListener('change', function () {
       planState.ticketType = Number(this.value);
@@ -978,6 +1007,7 @@
       o.textContent = c.childName + '（' + c.birthDate + '）';
       sel.appendChild(o);
     });
+    syncCourse();
 
     var row = $('#bk-makeup-row');
     if (state.makeup) {
@@ -1042,8 +1072,7 @@
 
     // 月の途中から買うと、有効期間内でも過ぎた開講日は選べない。
     // 回数分そろわない場合は単発をご案内する。
-    var part = PART_BY_AGE[state.ageClass];
-    var avail = part === 'first' ? opt.available.first : opt.available.second;
+    var avail = opt.available.first;
     var hint = $('#bk-start-hint');
     if (avail < needCount()) {
       hint.textContent =
@@ -1055,6 +1084,7 @@
       hint.className = 'bk-hint';
     }
 
+    syncCourse();
     loadFormSlots();
   }
 
@@ -1072,12 +1102,11 @@
       });
   }
 
-  /** 選択中のコースに対応する時間枠だけを表示対象にする（新規申込のみ） */
+  /** 申込で選べる開講日に絞る（開講中・未来の日のみ） */
   function applyAgeClass() {
     var today = todayJst();
-    var part = PART_BY_AGE[state.ageClass];
     state.slots = state.allSlots.filter(function (s) {
-      return s.part === part && s.status === 'open' && s.date > today;
+      return s.status === 'open' && s.date > today;
     });
 
     var sample = state.slots[0];
@@ -1117,13 +1146,49 @@
     renderFormCalendar();
   }
 
+  /**
+   * 選択中のお子様と開始月から料金区分を決め、その根拠を画面に出す。
+   *
+   * 判定するのはサーバー側（post-ticket.ts）で、ここは表示の先読み。
+   * 保護者に選ばせる項目ではないので、結果と理由だけを示す。
+   */
+  function syncCourse() {
+    var child = selectedChild();
+    var info = $('#bk-course-info');
+    state.ageClass = null;
+
+    if (!child || !state.validFrom) {
+      info.hidden = true;
+      return;
+    }
+
+    var age = ageOn(child.birthDate, state.validFrom);
+    var cls = ageClassOf(child.birthDate, state.validFrom);
+    state.ageClass = cls;
+    info.hidden = false;
+
+    if (!cls) {
+      info.innerHTML =
+        '<strong>お申込みいただけません。</strong><br>' +
+        'ご利用開始の時点で' + age + '歳のため、対象年齢（' + MAX_AGE + '歳まで）を超えています。';
+      return;
+    }
+
+    info.innerHTML =
+      'ご利用開始の時点で<strong>' + age + '歳</strong>のため、' +
+      '<strong>' + (cls === 'age4_5' ? '4〜5歳' : '0〜3歳') + 'の料金</strong>でご案内します。<br>' +
+      'ご利用期間の途中でお誕生日を迎えても、この回数券の金額は変わりません。';
+    updateFormUI();
+  }
+
   function updateFormUI() {
     var need = needCount();
     var got = state.selected.length;
 
     $('#bk-count').textContent = got + ' / ' + need + ' 日';
-    $('#bk-amount').textContent =
-      formatYen(priceOf(state.purchaseType, state.ageClass, state.ticketType));
+    $('#bk-amount').textContent = state.ageClass
+      ? formatYen(priceOf(state.purchaseType, state.ageClass, state.ticketType))
+      : '—';
 
     var msg = $('#bk-select-msg');
     if (got < need) {
@@ -1134,7 +1199,8 @@
       msg.className = 'bk-select-msg bk-select-msg--done';
     }
 
-    $('#bk-submit').disabled = got !== need;
+    // 対象年齢外のときは金額が決まらないので送信させない
+    $('#bk-submit').disabled = got !== need || !state.ageClass;
   }
 
   function resetSelection() {
@@ -1178,7 +1244,6 @@
       method: 'POST',
       body: JSON.stringify({
         childId: childId,
-        ageClass: state.ageClass,
         purchaseType: state.purchaseType,
         ticketType: state.ticketType,
         startMonth: state.startMonth,
@@ -1513,15 +1578,8 @@
     $('#bk-child-add').addEventListener('click', startAddChild);
 
     // 申込フォーム
-    Array.prototype.forEach.call(
-      document.querySelectorAll('input[name=ageClass]'),
-      function (el) {
-        el.addEventListener('change', function () {
-          state.ageClass = el.value;
-          onStartMonthChange();
-        });
-      }
-    );
+    // コースの選択欄は廃止。料金区分はご登録の生年月日から決まる。
+    $('#bk-child-select').addEventListener('change', syncCourse);
     Array.prototype.forEach.call(
       document.querySelectorAll('input[name=purchaseType]'),
       function (el) { el.addEventListener('change', onPurchaseTypeChange); }

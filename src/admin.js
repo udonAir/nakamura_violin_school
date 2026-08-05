@@ -25,6 +25,16 @@
 
   function formatYen(n) { return Number(n).toLocaleString('ja-JP') + '円'; }
 
+  function todayJst() {
+    return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+  }
+
+  /* 満年齢。サーバー側の ageOn と同じ規則で数える。 */
+  function ageOn(birthDate, asOf) {
+    var years = Number(asOf.slice(0, 4)) - Number(birthDate.slice(0, 4));
+    return asOf.slice(5) >= birthDate.slice(5) ? years : years - 1;
+  }
+
   /* ===== Cognito 認証 ===== */
 
   function cognito(target, payload) {
@@ -405,12 +415,16 @@
       var dl = document.createElement('dl');
       dl.className = 'ad-dl';
       [
-        ['コース', t.ageLabel],
+        // 料金区分は生年月日から自動で決まる。根拠の年齢を並べて出すことで、
+        // 「なぜこの金額か」を画面だけで追えるようにする。
+        ['料金区分', t.ageLabel + (t.ageAtStart === null || t.ageAtStart === undefined
+          ? '' : '（開始時 ' + t.ageAtStart + '歳）')],
         ['内容', (t.purchaseType === 'single' ? '単発 ' : '') + t.ticketType + (t.purchaseType === 'single' ? '回' : '回券')],
         ['金額', formatYen(t.amount)],
         ['有効期間', t.validFrom + ' 〜 ' + t.validTo],
         ['振替利用', t.usedMakeup ? 'あり（1回分を追加）' : 'なし'],
         ['生年月日', t.birthDate || '—'],
+        ['現在の年齢', t.birthDate ? ageOn(t.birthDate, todayJst()) + '歳' : '—'],
         ['メール', t.email],
         ['申込日', (t.createdAt || '').slice(0, 10)]
       ].forEach(function (r) {

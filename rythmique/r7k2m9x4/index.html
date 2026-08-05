@@ -222,19 +222,16 @@
 
                         <!-- STEP 1 -->
                         <div class="bk-panel">
-                            <h2 class="bk-head"><span class="bk-step">1</span>クラスとお申込み内容</h2>
+                            <h2 class="bk-head"><span class="bk-step">1</span>お子様とお申込み内容</h2>
 
-                            <fieldset class="bk-fieldset">
-                                <legend>コース</legend>
-                                <label class="bk-radio">
-                                    <input type="radio" name="ageClass" value="age0_3" checked>
-                                    <span>0〜3歳コース</span>
-                                </label>
-                                <label class="bk-radio">
-                                    <input type="radio" name="ageClass" value="age4_5">
-                                    <span>4〜5歳コース</span>
-                                </label>
-                            </fieldset>
+                            <div class="bk-field">
+                                <label for="bk-child-select">お通いになるお子様</label>
+                                <select id="bk-child-select" class="bk-select"></select>
+                                <p class="bk-hint">お子様の追加・修正は「お申込み状況」の画面から行えます。</p>
+                            </div>
+                            <!-- 料金はご登録の生年月日から自動で決まる。
+                                 保護者が選ぶ項目ではないので、結果だけを示す。 -->
+                            <p id="bk-course-info" class="bk-mailnote" hidden></p>
 
                             <fieldset class="bk-fieldset">
                                 <legend>お申込みの種類</legend>
@@ -305,11 +302,6 @@
                         <div class="bk-panel">
                             <h2 class="bk-head"><span class="bk-step">3</span>お申込みの確認</h2>
 
-                            <div class="bk-field">
-                                <label for="bk-child-select">お通いになるお子様</label>
-                                <select id="bk-child-select" class="bk-select"></select>
-                                <p class="bk-hint">お子様の追加・修正は「お申込み状況」の画面から行えます。</p>
-                            </div>
                             <div class="bk-field">
                                 <label for="bk-note">ご連絡事項（任意）</label>
                                 <textarea id="bk-note" rows="3" maxlength="1000"></textarea>
