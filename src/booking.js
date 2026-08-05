@@ -1167,15 +1167,20 @@
     state.ageClass = cls;
     info.hidden = false;
 
+    // 判定日は有効期間の初日＝ご利用開始月の1日。
+    // 「開始の時点」だと初回レッスン日と読めてしまうので、日付を明示する。
+    var basis = Number(state.validFrom.slice(5, 7)) + '月1日';
+
     if (!cls) {
       info.innerHTML =
         '<strong>お申込みいただけません。</strong><br>' +
-        'ご利用開始の時点で' + age + '歳のため、対象年齢（' + MAX_AGE + '歳まで）を超えています。';
+        'ご利用開始月の<strong>' + basis + '</strong>時点で' + age + '歳のため、' +
+        '対象年齢（' + MAX_AGE + '歳まで）を超えています。';
       return;
     }
 
     info.innerHTML =
-      'ご利用開始の時点で<strong>' + age + '歳</strong>のため、' +
+      'ご利用開始月の<strong>' + basis + '</strong>時点で<strong>' + age + '歳</strong>のため、' +
       '<strong>' + (cls === 'age4_5' ? '4〜5歳' : '0〜3歳') + 'の料金</strong>でご案内します。<br>' +
       'ご利用期間の途中でお誕生日を迎えても、この回数券の金額は変わりません。';
     updateFormUI();

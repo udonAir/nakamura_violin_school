@@ -418,7 +418,7 @@
         // 料金区分は生年月日から自動で決まる。根拠の年齢を並べて出すことで、
         // 「なぜこの金額か」を画面だけで追えるようにする。
         ['料金区分', t.ageLabel + (t.ageAtStart === null || t.ageAtStart === undefined
-          ? '' : '（開始時 ' + t.ageAtStart + '歳）')],
+          ? '' : '（開始月初日に ' + t.ageAtStart + '歳）')],
         ['内容', (t.purchaseType === 'single' ? '単発 ' : '') + t.ticketType + (t.purchaseType === 'single' ? '回' : '回券')],
         ['金額', formatYen(t.amount)],
         ['有効期間', t.validFrom + ' 〜 ' + t.validTo],
