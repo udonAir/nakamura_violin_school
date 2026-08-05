@@ -628,7 +628,36 @@
         'こちらからは変更できません。教室までご連絡ください。';
     box.appendChild(planNote);
 
+    // 申込そのものの取消。期間が始まる前だけ、保護者が自分で全部消せる。
+    if (t.status !== 'cancelled' && canChangePlan) {
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'bk-linkbtn bk-linkbtn--danger';
+      del.textContent = 'このお申込みを取り消す';
+      del.addEventListener('click', function () { cancelTicket(t); });
+      box.appendChild(del);
+    }
+
     closeEditor();
+  }
+
+  /** 申込をまるごと取り消す（ご利用開始月の前月末まで） */
+  function cancelTicket(t) {
+    var msg =
+      'このお申込みを取り消します。\n' +
+      '参加予定日のご予約はすべて取り消され、元に戻せません。\n';
+    if (t.usedMakeup) {
+      msg += '\nお使いになった振替の1回分は、期限内であればお戻しします。\n';
+    }
+    msg += '\nよろしいですか？';
+    if (!window.confirm(msg)) return;
+
+    api('/tickets/' + encodeURIComponent(t.ticketId) + '/cancel', { method: 'POST' })
+      .then(function () {
+        window.alert('お申込みを取り消しました。');
+        loadMyPage();
+      })
+      .catch(function (e) { window.alert(e.message); });
   }
 
   /** 変更の枠を開く。見出しを差し替えて中身を空にする。 */
@@ -1419,7 +1448,16 @@
         note: $('#bk-note').value
       })
     })
-      .then(showReceipt)
+      .then(function (d) {
+        // 振替を使って申し込んだ時点で権利は消費されている。
+        // マイページへ戻ったときに「振替が1回分あります」を出さない。
+        if (state.useMakeup) {
+          state.makeup = null;
+          state.useMakeup = false;
+          renderMakeup(null);
+        }
+        showReceipt(d);
+      })
       .catch(function (err) {
         errorBox.textContent = err.message;
         btn.disabled = false;
