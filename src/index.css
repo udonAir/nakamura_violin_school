@@ -3124,6 +3124,28 @@ ul {
   cursor: pointer;
 }
 
+/* 削除など、取り消しのきかない操作。押し間違いを減らすため色で区別する。 */
+.bk-linkbtn--danger {
+  color: #b45a3c;
+}
+
+/* 姓と名を横に並べる。狭い画面では縦に落とす。 */
+.bk-namepair {
+  display: flex;
+  gap: 12px;
+}
+
+.bk-namepair .bk-field {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+@media (max-width: 380px) {
+  .bk-namepair {
+    display: block;
+  }
+}
+
 .bk-back {
   margin-bottom: 12px;
 }

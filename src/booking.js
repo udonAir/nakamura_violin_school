@@ -42,6 +42,7 @@
     children: [],
     makeup: null,
     editingChildId: '',
+    addingChild: false,
     pendingQr: ''
   };
 
@@ -243,12 +244,32 @@
 
   /* ===== お子様の登録（顧客マスタ） ===== */
 
+  /** 登録できるお子様の人数。サーバー側（children.ts）と揃えること。 */
+  var MAX_CHILDREN = 5;
+
+  /**
+   * お子様の登録フォームを出すかどうか。
+   *
+   * 1人目がまだのときと、修正中のときだけ開く。登録が済んだら畳んで
+   * 「兄弟姉妹を登録する」ボタンに変える。出しっぱなしにすると
+   * 「まだ入力しなければいけない」と読めて手が止まる。
+   */
+  function syncChildForm() {
+    var editing = !!state.editingChildId;
+    var empty = state.children.length === 0;
+    var open = editing || empty || state.addingChild;
+
+    $('#bk-child-form').hidden = !open;
+    $('#bk-child-add').hidden = open || state.children.length >= MAX_CHILDREN;
+  }
+
   function renderChildren() {
     var box = $('#bk-children');
     box.innerHTML = '';
 
     if (state.children.length === 0) {
       box.innerHTML = '<p class="bk-hint">まだ登録がありません。下のフォームからご登録ください。</p>';
+      syncChildForm();
       return;
     }
 
@@ -273,26 +294,77 @@
       edit.addEventListener('click', function () { startEditChild(c); });
       row.appendChild(edit);
 
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'bk-linkbtn bk-linkbtn--danger';
+      del.textContent = '削除';
+      del.addEventListener('click', function () { removeChild(c); });
+      row.appendChild(del);
+
       box.appendChild(row);
     });
+
+    syncChildForm();
   }
 
   function startEditChild(c) {
     state.editingChildId = c.childId;
-    $('#bk-child-name').value = c.childName;
+    state.addingChild = false;
+    // 古い登録には姓・名が別れて入っていないので、氏名を空白で割って充てる
+    var parts = splitName(c);
+    $('#bk-child-family').value = parts[0];
+    $('#bk-child-given').value = parts[1];
     $('#bk-child-birth').value = c.birthDate;
     $('#bk-child-save').textContent = 'この内容に修正する';
     $('#bk-child-cancel').hidden = false;
-    $('#bk-child-name').focus();
+    syncChildForm();
+    $('#bk-child-family').focus();
   }
 
-  function resetChildForm() {
+  /**
+   * お子様の登録を削除する。
+   * 有効なお申込みが残っている場合はサーバーが409で拒む（枠の予約が宙に浮くため）。
+   */
+  function removeChild(c) {
+    if (!window.confirm(c.childName + ' さんの登録を削除します。よろしいですか。')) return;
+
+    api('/me/children/' + encodeURIComponent(c.childId), { method: 'DELETE' })
+      .then(function () {
+        if (state.editingChildId === c.childId) resetChildForm();
+        loadMyPage();
+      })
+      .catch(function (e) { window.alert(e.message); });
+  }
+
+  function splitName(c) {
+    if (c.familyName || c.givenName) return [c.familyName || '', c.givenName || ''];
+    var m = String(c.childName || '').split(/[\s　]+/);
+    return [m[0] || '', m.slice(1).join(' ')];
+  }
+
+  /** 「兄弟姉妹を登録する」を押したとき */
+  function startAddChild() {
     state.editingChildId = '';
-    $('#bk-child-name').value = '';
+    state.addingChild = true;
+    clearChildFields();
+    syncChildForm();
+    $('#bk-child-family').focus();
+  }
+
+  function clearChildFields() {
+    $('#bk-child-family').value = '';
+    $('#bk-child-given').value = '';
     $('#bk-child-birth').value = '';
     $('#bk-child-error').textContent = '';
     $('#bk-child-save').textContent = 'この内容で登録する';
     $('#bk-child-cancel').hidden = true;
+  }
+
+  function resetChildForm() {
+    state.editingChildId = '';
+    state.addingChild = false;
+    clearChildFields();
+    syncChildForm();
   }
 
   function onChildSubmit(e) {
@@ -301,22 +373,23 @@
     var btn = $('#bk-child-save');
     err.textContent = '';
 
-    var name = $('#bk-child-name').value.trim();
+    var family = $('#bk-child-family').value.trim();
+    var given = $('#bk-child-given').value.trim();
     var birth = $('#bk-child-birth').value;
-    if (!name) { err.textContent = 'お子様のお名前を入力してください。'; return; }
+    if (!family) { err.textContent = 'お子様の姓を入力してください。'; return; }
+    if (!given) { err.textContent = 'お子様の名を入力してください。'; return; }
     if (!birth) { err.textContent = 'お子様の生年月日を入力してください。'; return; }
 
     btn.disabled = true;
     var editing = state.editingChildId;
+    var payload = JSON.stringify({
+      familyName: family,
+      givenName: given,
+      birthDate: birth
+    });
     var req = editing
-      ? api('/me/children/' + encodeURIComponent(editing), {
-        method: 'PATCH',
-        body: JSON.stringify({ childName: name, birthDate: birth })
-      })
-      : api('/me/children', {
-        method: 'POST',
-        body: JSON.stringify({ childName: name, birthDate: birth })
-      });
+      ? api('/me/children/' + encodeURIComponent(editing), { method: 'PATCH', body: payload })
+      : api('/me/children', { method: 'POST', body: payload });
 
     req
       .then(function () {
@@ -869,7 +942,7 @@
   function openForm() {
     if (state.children.length === 0) {
       window.alert('先にお子様をご登録ください。');
-      $('#bk-child-name').focus();
+      $('#bk-child-family').focus();
       return;
     }
 
@@ -1417,6 +1490,7 @@
     // お子様の登録
     $('#bk-child-form').addEventListener('submit', onChildSubmit);
     $('#bk-child-cancel').addEventListener('click', resetChildForm);
+    $('#bk-child-add').addEventListener('click', startAddChild);
 
     // 申込フォーム
     Array.prototype.forEach.call(

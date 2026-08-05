@@ -154,13 +154,20 @@
                 <div id="bk-mypage">
                     <div class="bk-panel">
                         <h2 class="bk-head">お子様の登録</h2>
-                        <p class="bk-hint">お申込みの前に、お通いになるお子様を登録してください。
-                            ご兄弟姉妹は続けて登録できます。</p>
+                        <p class="bk-hint">お申込みの前に、お通いになるお子様を登録してください。</p>
                         <div id="bk-children"></div>
                         <form id="bk-child-form" class="bk-child-form">
-                            <div class="bk-field">
-                                <label for="bk-child-name">お子様のお名前 <span class="bk-required">必須</span></label>
-                                <input type="text" id="bk-child-name" maxlength="50">
+                            <div class="bk-namepair">
+                                <div class="bk-field">
+                                    <label for="bk-child-family">姓 <span class="bk-required">必須</span></label>
+                                    <input type="text" id="bk-child-family" maxlength="25"
+                                        autocomplete="off" placeholder="中村">
+                                </div>
+                                <div class="bk-field">
+                                    <label for="bk-child-given">名 <span class="bk-required">必須</span></label>
+                                    <input type="text" id="bk-child-given" maxlength="25"
+                                        autocomplete="off" placeholder="恒二郎">
+                                </div>
                             </div>
                             <div class="bk-field">
                                 <label for="bk-child-birth">お子様の生年月日 <span class="bk-required">必須</span></label>
@@ -170,6 +177,11 @@
                             <button type="submit" id="bk-child-save" class="btn btn-outline">この内容で登録する</button>
                             <button type="button" id="bk-child-cancel" class="bk-linkbtn" hidden>やめる</button>
                         </form>
+                        <!-- 登録が済んだらフォームを畳み、必要な人だけがここから開く。
+                             出しっぱなしにすると「まだ入力しろ」と読めて混乱する。 -->
+                        <button type="button" id="bk-child-add" class="bk-linkbtn" hidden>
+                            ＋ 兄弟姉妹（2人目以降）を登録する
+                        </button>
                     </div>
 
                     <div class="bk-panel">
