@@ -758,6 +758,24 @@
 
   /** 振替にまわす */
   function toMakeup(r) {
+    var t = detail.ticket;
+
+    /* ご利用開始前なら、まだ回数を減らせる。
+       振替は「通えるはずだった回に行けなかった」ときの救済で、お一人1回しか
+       使えない。開始前に使ってしまうと、本当に必要になったときに残らない。
+       回数変更で足りる場面では、そちらへ案内する。 */
+    if (t.validFrom && todayJst() < t.validFrom) {
+      var toPlan = window.confirm(
+        'この回数券はまだご利用開始前です（' + formatDateJa(t.validFrom) + '開始）。\n\n' +
+        'この時期であれば「回数の変更」で回数と日程を選び直せます。\n' +
+        '振替はお一人1回までのため、実際にお休みされたときのために' +
+        'とっておくことをおすすめします。\n\n' +
+        '回数の変更に進みますか？'
+      );
+      if (toPlan) openPlanEditor();
+      return;
+    }
+
     var ok = window.confirm(
       formatDateJa(r.date) + ' の回を振替にまわします。\n' +
       'この回のご予約は取り消され、次の回数券をお申込みの際に1回分を追加できます。\n' +
