@@ -68,6 +68,14 @@
   box-sizing: border-box;
 }
 
+/* hidden 属性を常に効かせる。
+   ブラウザ既定の [hidden] { display: none } は作者側の display 指定に負けるため、
+   .bk-linkbtn（inline-block）や .bk-check（flex）に hidden を付けても消えなかった。
+   JS側で hidden を切り替えている箇所が多いので、ここで一括して押さえる。 */
+[hidden] {
+  display: none !important;
+}
+
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 90px;
