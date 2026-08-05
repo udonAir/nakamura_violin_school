@@ -3157,9 +3157,9 @@ ul {
   color: var(--charcoal-light);
 }
 
-/* 変更の操作枠。お申込み内容の枠と区別が付くよう縁で示す。 */
+/* 変更の操作枠。お申込み内容の枠と区別が付くよう、地色を少し変える。 */
 .bk-panel--edit {
-  border: 2px solid #b45a3c;
+  background: #fdfaf7;
 }
 
 /* 姓と名を横に並べる。狭い画面では縦に落とす。 */

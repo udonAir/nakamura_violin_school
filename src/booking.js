@@ -707,7 +707,16 @@
       return;
     }
 
+    // ラベルごと bk-field に入れて、下のボタンとの間に余白を取る
+    var field = document.createElement('div');
+    field.className = 'bk-field';
+    var label = document.createElement('label');
+    label.setAttribute('for', 'bk-change-to');
+    label.textContent = '変更先の開講日';
+    field.appendChild(label);
+
     var sel = document.createElement('select');
+    sel.id = 'bk-change-to';
     sel.className = 'bk-select';
     candidates.forEach(function (s) {
       var o = document.createElement('option');
@@ -718,7 +727,8 @@
         '（残' + s.remaining + '）';
       sel.appendChild(o);
     });
-    editor.appendChild(sel);
+    field.appendChild(sel);
+    editor.appendChild(field);
 
     var err = document.createElement('p');
     err.className = 'bk-error';
