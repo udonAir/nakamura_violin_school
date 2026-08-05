@@ -799,6 +799,7 @@
       if (n === t.ticketType) o.selected = true;
       sel.appendChild(o);
     });
+    syncPlanTypeLimit();
 
     sel.addEventListener('change', function () {
       planState.ticketType = Number(this.value);
@@ -818,15 +819,46 @@
     editor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
-  function renderPlanCalendar() {
+  /** 変更後に選べる開講日（すでに選んである日は満席でも保持する） */
+  function usablePlanSlots() {
     var today = todayJst();
-    var wrap = $('#bk-edit-calendar');
-    wrap.innerHTML = '';
-
-    var usable = state.allSlots.filter(function (s) {
+    return state.allSlots.filter(function (s) {
       if (planState.selected.indexOf(s.slotId) >= 0) return true;
       return s.status === 'open' && !s.full && s.date > today;
     });
+  }
+
+  /**
+   * 変更先として選べる開講日が足りない回数は選ばせない。
+   * 申込時（syncTicketTypeLimit）と同じ考え方で、振替の1回分も必要日数に含める。
+   * ここを絞らないと、8回券へ変更したものの日程を選び切れず、
+   * 「この内容に変更する」が押せないまま行き止まりになる。
+   */
+  function syncPlanTypeLimit() {
+    var avail = usablePlanSlots().length;
+    var sel = $('#bk-edit-type');
+    if (!sel) return;
+
+    Array.prototype.forEach.call(sel.options, function (o) {
+      o.disabled = Number(o.value) + planState.extra > avail;
+    });
+
+    if (sel.selectedOptions[0] && sel.selectedOptions[0].disabled) {
+      for (var i = sel.options.length - 1; i >= 0; i--) {
+        if (!sel.options[i].disabled) {
+          sel.selectedIndex = i;
+          planState.ticketType = Number(sel.value);
+          break;
+        }
+      }
+    }
+  }
+
+  function renderPlanCalendar() {
+    var wrap = $('#bk-edit-calendar');
+    wrap.innerHTML = '';
+
+    var usable = usablePlanSlots();
 
     monthsBetween(state.validFrom, state.validTo).forEach(function (month) {
       wrap.appendChild(
