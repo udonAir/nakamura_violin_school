@@ -291,7 +291,9 @@
     var open = editing || empty || state.addingChild;
 
     $('#bk-child-form').hidden = !open;
-    $('#bk-child-add').hidden = open || state.children.length >= MAX_CHILDREN;
+    // 1人目の登録中は出さない。まだ1人もいないのに「2人目」を勧めても混乱する。
+    $('#bk-child-add').hidden =
+      open || state.children.length === 0 || state.children.length >= MAX_CHILDREN;
   }
 
   function renderChildren() {
@@ -349,7 +351,6 @@
     $('#bk-child-given-kana').value = c.givenKana || '';
     $('#bk-child-birth').value = c.birthDate;
     $('#bk-child-save').textContent = 'この内容に修正する';
-    $('#bk-child-cancel').hidden = false;
     syncChildForm();
     $('#bk-child-family').focus();
   }
@@ -392,7 +393,6 @@
     $('#bk-child-birth').value = '';
     $('#bk-child-error').textContent = '';
     $('#bk-child-save').textContent = 'この内容で登録する';
-    $('#bk-child-cancel').hidden = true;
   }
 
   function resetChildForm() {
@@ -1574,7 +1574,6 @@
 
     // お子様の登録
     $('#bk-child-form').addEventListener('submit', onChildSubmit);
-    $('#bk-child-cancel').addEventListener('click', resetChildForm);
     $('#bk-child-add').addEventListener('click', startAddChild);
 
     // 申込フォーム
