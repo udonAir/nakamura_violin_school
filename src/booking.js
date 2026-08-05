@@ -247,6 +247,10 @@
   /** 登録できるお子様の人数。サーバー側（children.ts）と揃えること。 */
   var MAX_CHILDREN = 5;
 
+  /* ふりがなはひらがなと長音符のみ。サーバー側の KANA_RE と揃えること。
+     カタカナや漢字が混ざると五十音順の並べ替えが崩れる。 */
+  var KANA_RE = /^[ぁ-んー]{1,25}$/;
+
   /**
    * お子様の登録フォームを出すかどうか。
    *
@@ -314,6 +318,8 @@
     var parts = splitName(c);
     $('#bk-child-family').value = parts[0];
     $('#bk-child-given').value = parts[1];
+    $('#bk-child-family-kana').value = c.familyKana || '';
+    $('#bk-child-given-kana').value = c.givenKana || '';
     $('#bk-child-birth').value = c.birthDate;
     $('#bk-child-save').textContent = 'この内容に修正する';
     $('#bk-child-cancel').hidden = false;
@@ -354,6 +360,8 @@
   function clearChildFields() {
     $('#bk-child-family').value = '';
     $('#bk-child-given').value = '';
+    $('#bk-child-family-kana').value = '';
+    $('#bk-child-given-kana').value = '';
     $('#bk-child-birth').value = '';
     $('#bk-child-error').textContent = '';
     $('#bk-child-save').textContent = 'この内容で登録する';
@@ -375,9 +383,19 @@
 
     var family = $('#bk-child-family').value.trim();
     var given = $('#bk-child-given').value.trim();
+    var familyKana = $('#bk-child-family-kana').value.trim();
+    var givenKana = $('#bk-child-given-kana').value.trim();
     var birth = $('#bk-child-birth').value;
     if (!family) { err.textContent = 'お子様の姓を入力してください。'; return; }
     if (!given) { err.textContent = 'お子様の名を入力してください。'; return; }
+    if (!KANA_RE.test(familyKana)) {
+      err.textContent = 'せいは、ひらがなで入力してください。';
+      return;
+    }
+    if (!KANA_RE.test(givenKana)) {
+      err.textContent = 'めいは、ひらがなで入力してください。';
+      return;
+    }
     if (!birth) { err.textContent = 'お子様の生年月日を入力してください。'; return; }
 
     btn.disabled = true;
@@ -385,6 +403,8 @@
     var payload = JSON.stringify({
       familyName: family,
       givenName: given,
+      familyKana: familyKana,
+      givenKana: givenKana,
       birthDate: birth
     });
     var req = editing
