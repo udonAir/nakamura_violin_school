@@ -212,6 +212,14 @@
                         <h2 class="bk-head">お申込み内容</h2>
                         <div id="bk-detail-body"></div>
                     </div>
+
+                    <!-- 変更の操作はお申込み内容とは別の枠に出す。
+                         同じ枠に続けて出すと、どこからが変更中の内容か分からない。 -->
+                    <div class="bk-panel bk-panel--edit" id="bk-editor-panel" hidden>
+                        <h2 class="bk-head" id="bk-editor-head">変更</h2>
+                        <div id="bk-editor"></div>
+                        <button type="button" id="bk-editor-close" class="bk-linkbtn">変更をやめる</button>
+                    </div>
                 </div>
 
                 <!-- ===== 申込フォーム ===== -->
@@ -246,6 +254,11 @@
 
                             <fieldset class="bk-fieldset" id="bk-ticket-type-row">
                                 <legend>回数券の種類</legend>
+                                <!-- 5回券は振替をお使いになるときだけ出す特例 -->
+                                <label class="bk-radio" id="bk-ticket5-row" hidden>
+                                    <input type="radio" name="ticketType" value="5">
+                                    <span>5回券<small class="bk-note-inline">（振替1回を加えて6回になります）</small></span>
+                                </label>
                                 <label class="bk-radio">
                                     <input type="radio" name="ticketType" value="6" checked>
                                     <span>6回券</span>

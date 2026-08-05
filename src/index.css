@@ -3150,6 +3150,18 @@ ul {
   cursor: not-allowed;
 }
 
+/* 選択肢の補足。ラベル本体より控えめに置く。 */
+.bk-note-inline {
+  margin-left: 6px;
+  font-size: 0.78rem;
+  color: var(--charcoal-light);
+}
+
+/* 変更の操作枠。お申込み内容の枠と区別が付くよう縁で示す。 */
+.bk-panel--edit {
+  border: 2px solid #b45a3c;
+}
+
 /* 姓と名を横に並べる。狭い画面では縦に落とす。 */
 .bk-namepair {
   display: flex;

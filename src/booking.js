@@ -11,9 +11,12 @@
   var TRIAL_FORM_URL =
     'https://docs.google.com/forms/d/1D1GHXF9IeXEmMy0lBG19rGpgoC9d2AB9rEwnRlm72jE/viewform';
 
+  /* 5回券は振替をお使いになるときだけの特例。
+     5回分＋振替1回で6回になり、6回券と同じ通い方になる。
+     サーバー側の TICKET_PRICES と揃えること。 */
   var TICKET_PRICES = {
-    age0_3: { 6: 12500, 7: 13000, 8: 13500 },
-    age4_5: { 6: 17000, 7: 17500, 8: 18000 }
+    age0_3: { 5: 12000, 6: 12500, 7: 13000, 8: 13500 },
+    age4_5: { 5: 16500, 6: 17000, 7: 17500, 8: 18000 }
   };
   var SINGLE_PRICES = { age0_3: 2500, age4_5: 3000 };
 
@@ -528,6 +531,8 @@
 
   function openDetail(ticketId) {
     showPane('bk-detail');
+    // 別の申込を開いたときに、前回の変更枠が残らないようにする
+    closeEditor();
     var box = $('#bk-detail-body');
     box.textContent = '読み込んでいます…';
 
@@ -623,9 +628,20 @@
         'こちらからは変更できません。教室までご連絡ください。';
     box.appendChild(planNote);
 
-    var editor = document.createElement('div');
-    editor.id = 'bk-editor';
-    box.appendChild(editor);
+    closeEditor();
+  }
+
+  /** 変更の枠を開く。見出しを差し替えて中身を空にする。 */
+  function openEditor(title) {
+    $('#bk-editor-head').textContent = title;
+    $('#bk-editor').innerHTML = '';
+    $('#bk-editor-panel').hidden = false;
+    return $('#bk-editor');
+  }
+
+  function closeEditor() {
+    $('#bk-editor').innerHTML = '';
+    $('#bk-editor-panel').hidden = true;
   }
 
   function renderReservation(r, today) {
@@ -679,13 +695,7 @@
       return s.status === 'open' && !s.full && s.date > today && taken.indexOf(s.slotId) < 0;
     });
 
-    var editor = $('#bk-editor');
-    editor.innerHTML = '';
-
-    var h = document.createElement('h3');
-    h.className = 'bk-subhead';
-    h.textContent = formatDateJa(r.date) + ' の変更先をお選びください';
-    editor.appendChild(h);
+    var editor = openEditor(formatDateJa(r.date) + ' の参加日を変更');
 
     if (candidates.length === 0) {
       var none = document.createElement('p');
@@ -733,7 +743,7 @@
         });
     });
     editor.appendChild(go);
-    editor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    $('#bk-editor-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   /** 振替にまわす */
@@ -762,7 +772,7 @@
   function openPlanEditor() {
     var t = detail.ticket;
     var today = todayJst();
-    var editor = $('#bk-editor');
+    var editor = openEditor('回数と参加予定日を変更');
 
     planState = {
       selected: t.reservations.map(function (r) { return r.slotId; }),
@@ -777,7 +787,6 @@
     };
 
     editor.innerHTML =
-      '<h3 class="bk-subhead">回数と参加予定日</h3>' +
       '<div class="bk-field"><label for="bk-edit-type">回数</label>' +
       '<select id="bk-edit-type" class="bk-select"></select></div>' +
       '<div class="bk-summary"><span>選択中 <strong id="bk-edit-count"></strong></span>' +
@@ -791,11 +800,16 @@
       '<button type="button" id="bk-edit-submit" class="btn btn-primary">この内容に変更する</button>';
 
     var sel = $('#bk-edit-type');
-    var options = t.purchaseType === 'single' ? [1, 2, 3] : [6, 7, 8];
+    // 5回券は振替を使って買った券だけの特例。区分は購入時に確定していて変えられない。
+    var options = t.purchaseType === 'single'
+      ? [1, 2, 3]
+      : (t.usedMakeup ? [5, 6, 7, 8] : [6, 7, 8]);
     options.forEach(function (n) {
       var o = document.createElement('option');
       o.value = n;
-      o.textContent = t.purchaseType === 'single' ? n + '回' : n + '回券';
+      o.textContent = t.purchaseType === 'single'
+        ? n + '回'
+        : n + '回券' + (n === 5 ? '（振替1回を加えて6回）' : '');
       if (n === t.ticketType) o.selected = true;
       sel.appendChild(o);
     });
@@ -816,7 +830,7 @@
 
     $('#bk-edit-submit').addEventListener('click', submitPlan);
     renderPlanCalendar();
-    editor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    $('#bk-editor-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   /** 変更後に選べる開講日（すでに選んである日は満席でも保持する） */
@@ -1153,6 +1167,17 @@
   function syncTicketTypeLimit() {
     var extra = state.useMakeup ? 1 : 0;
     var avail = state.avail;
+
+    // 5回券は振替をお使いになるときだけ。外したら選択も6回券へ戻す。
+    var row5 = $('#bk-ticket5-row');
+    row5.hidden = !state.useMakeup;
+    var input5 = row5.querySelector('input');
+    if (!state.useMakeup && input5.checked) {
+      document.querySelector('input[name=ticketType][value="6"]').checked = true;
+      state.ticketType = 6;
+      resetSelection();
+    }
+
     var current = null;
     var best = null;
 
@@ -1685,6 +1710,7 @@
       b.addEventListener('click', loadMyPage);
     });
     $('#bk-new').addEventListener('click', openForm);
+    $('#bk-editor-close').addEventListener('click', closeEditor);
 
     // お子様の登録
     $('#bk-child-form').addEventListener('submit', onChildSubmit);
