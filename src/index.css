@@ -3265,6 +3265,25 @@ ul {
   color: #b45a3c;
 }
 
+/* 確認コードのメールが迷惑メールに入りやすいので、見落とされない位置に出す。
+   差出人は Cognito 既定の共用ドメインで、こちらのDKIM/SPFが効かない。
+   アドレスを明記しておくと、保護者がメールを検索して見つけられる。 */
+.bk-mailnote {
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--charcoal);
+  background: #fdf6f2;
+  border: 1px solid #e8c9ba;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-top: 10px;
+}
+
+.bk-mailnote strong {
+  /* アドレスと件名が折り返しで読みにくくならないようにする */
+  overflow-wrap: anywhere;
+}
+
 /* --- 管理画面：出欠 --- */
 .ad-attendee {
   display: flex;

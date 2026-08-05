@@ -96,7 +96,11 @@
     }
     if (/already exists/.test(msg)) return 'このメールアドレスはすでに登録されています。ログインしてください。';
     if (/Invalid verification code/.test(msg)) return '確認コードが違います。';
-    if (/already confirmed/.test(msg)) return 'すでにご登録が完了しています。ログインしてください。';
+    // 確認済みのアドレスで登録し直そうとした場合。Cognitoは
+    // 「User cannot be confirmed. Current status is CONFIRMED」を返す。
+    if (/already confirmed|Current status is CONFIRMED/.test(msg)) {
+      return 'すでにご登録が完了しています。「ログイン」からお進みください。';
+    }
     if (/Invalid code provided|ExpiredCode/.test(msg)) return '確認コードが違うか、有効期限が切れています。';
     if (/Password did not conform/.test(msg)) return 'パスワードは8文字以上で、英字と数字を含めてください。';
     if (/Attempt limit exceeded/.test(msg)) return '回数の上限に達しました。しばらく時間をおいてお試しください。';
@@ -1250,7 +1254,7 @@
         if (/すでに登録されています/.test(e2.message)) {
           return resendCode()
             .then(function () {
-              showConfirmForm('確認コードを送り直しました。メールをご確認ください。');
+              showConfirmForm('確認コードを送り直しました。迷惑メールフォルダもご確認ください。');
             })
             .catch(function () {
               err.textContent =
@@ -1291,7 +1295,7 @@
     resendCode()
       .then(function () {
         info.hidden = false;
-        info.textContent = '確認コードを送り直しました。メールをご確認ください。';
+        info.textContent = '確認コードを送り直しました。迷惑メールフォルダもご確認ください。';
       })
       .catch(function (e) { err.textContent = e.message; })
       .then(function () {
@@ -1326,7 +1330,18 @@
         saveTokens(r.AuthenticationResult);
         afterLogin();
       })
-      .catch(function (e2) { err.textContent = e2.message; })
+      .catch(function (e2) {
+        // 確認済みのアドレスだった場合、この画面に留まっても先へ進めない。
+        // メールアドレスを引き継いでログイン画面へ送る。
+        if (/すでにご登録が完了しています/.test(e2.message)) {
+          switchAuthTab('login');
+          $('#bk-login-email').value = auth.signupEmail;
+          $('#bk-login-error').textContent = e2.message;
+          $('#bk-login-pass').focus();
+          return;
+        }
+        err.textContent = e2.message;
+      })
       .then(function () {
         btn.disabled = false;
         btn.textContent = '登録を完了する';

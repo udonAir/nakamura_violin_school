@@ -74,6 +74,11 @@
                     <!-- 新規登録 -->
                     <form id="bk-signup-form" class="bk-auth-form" hidden>
                         <p class="bk-hint">ご登録のメールアドレスに確認コードをお送りします。</p>
+                        <p class="bk-mailnote">確認コードは
+                            <strong>no-reply@verificationemail.com</strong>
+                            から届きます。<br>
+                            <strong>迷惑メールフォルダに入ることがあります</strong>ので、
+                            届かないときはそちらもご確認ください。</p>
                         <div class="bk-field">
                             <label for="bk-signup-email">メールアドレス</label>
                             <input type="email" id="bk-signup-email" required autocomplete="email">
@@ -88,8 +93,12 @@
 
                     <!-- 確認コード入力 -->
                     <form id="bk-confirm-form" class="bk-auth-form" hidden>
-                        <p class="bk-hint">メールに届いた確認コードを入力してください。<br>
-                            <strong>メールが見当たらない場合は、迷惑メールフォルダをご確認ください。</strong></p>
+                        <p class="bk-hint">メールに届いた確認コードを入力してください。</p>
+                        <p class="bk-mailnote">メールが見当たらないときは、
+                            <strong>迷惑メールフォルダ</strong>をご確認ください。<br>
+                            差出人は <strong>no-reply@verificationemail.com</strong>、
+                            件名は「【なかむらバイオリン教室】確認コードのお知らせ」です。
+                            このアドレスで検索すると見つかります。</p>
                         <div class="bk-field">
                             <label for="bk-confirm-code">確認コード</label>
                             <input type="text" id="bk-confirm-code" required inputmode="numeric" autocomplete="one-time-code">
@@ -103,6 +112,11 @@
                     <!-- パスワード再設定 -->
                     <form id="bk-forgot-form" class="bk-auth-form" hidden>
                         <p class="bk-hint">ご登録のメールアドレスに再設定用のコードをお送りします。</p>
+                        <p class="bk-mailnote">コードは
+                            <strong>no-reply@verificationemail.com</strong>
+                            から届きます。<br>
+                            <strong>迷惑メールフォルダに入ることがあります</strong>ので、
+                            届かないときはそちらもご確認ください。</p>
                         <div class="bk-field">
                             <label for="bk-forgot-email">メールアドレス</label>
                             <input type="email" id="bk-forgot-email" required autocomplete="email">
