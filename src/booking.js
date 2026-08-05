@@ -73,11 +73,13 @@
   }
 
   /* 料金区分。判定はサーバーが行うので、ここは表示のための先読み。
-     基準日は有効期間の開始日。7歳以上は null（申込不可）。 */
+     基準日はご利用開始月の1日。7歳以上は null（申込不可）。
+     下限では拒まない。開始月の1日より後に生まれた乳児は年齢が負になるが、
+     0〜3歳の料金で案内すればよい。 */
   function ageClassOf(birthDate, asOf) {
     if (!birthDate || !asOf) return null;
     var age = ageOn(birthDate, asOf);
-    if (age < 0 || age > MAX_AGE) return null;
+    if (age > MAX_AGE) return null;
     return age <= 3 ? 'age0_3' : 'age4_5';
   }
 
@@ -1179,8 +1181,13 @@
       return;
     }
 
+    // 開始月の1日より後に生まれた場合は年齢が負になる。「-1歳」とは出さない。
+    var basisText = age < 0
+      ? 'ご利用開始月の<strong>' + basis + '</strong>時点ではお生まれになる前のため、'
+      : 'ご利用開始月の<strong>' + basis + '</strong>時点で<strong>' + age + '歳</strong>のため、';
+
     info.innerHTML =
-      'ご利用開始月の<strong>' + basis + '</strong>時点で<strong>' + age + '歳</strong>のため、' +
+      basisText +
       '<strong>' + (cls === 'age4_5' ? '4〜5歳' : '0〜3歳') + 'の料金</strong>でご案内します。<br>' +
       'ご利用期間の途中でお誕生日を迎えても、この回数券の金額は変わりません。';
     updateFormUI();
