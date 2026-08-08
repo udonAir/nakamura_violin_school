@@ -47,7 +47,7 @@
     avail: 0,
     options: [],
     children: [],
-    makeup: null,
+    makeups: [],
     editingChildId: '',
     addingChild: false,
     pendingQr: ''
@@ -274,9 +274,9 @@
     api('/me')
       .then(function (d) {
         state.children = d.children || [];
-        state.makeup = d.makeup;
+        state.makeups = d.makeups || [];
         renderChildren();
-        renderMakeup(d.makeup);
+        renderMakeup();
         renderTickets(d.tickets || []);
       })
       .catch(function (e) { box.textContent = e.message; });
@@ -462,19 +462,45 @@
 
   /* ===== 振替・申込一覧 ===== */
 
-  function renderMakeup(m) {
+  /* 振替はお子様ごとに1回まで。誰の分かを必ず添えて表示する。 */
+  function makeupOf(childId) {
+    for (var i = 0; i < state.makeups.length; i++) {
+      if (state.makeups[i].childId === childId) return state.makeups[i];
+    }
+    return null;
+  }
+
+  /* 使い終わった振替を手元の一覧から落とす（表示のずれを防ぐ） */
+  function dropMakeup(childId) {
+    state.makeups = state.makeups.filter(function (m) { return m.childId !== childId; });
+    renderMakeup();
+  }
+
+  function childNameOf(childId) {
+    for (var i = 0; i < state.children.length; i++) {
+      if (state.children[i].childId === childId) return state.children[i].childName;
+    }
+    return 'お子様';
+  }
+
+  function renderMakeup() {
     var box = $('#bk-makeup');
-    if (!m) { box.hidden = true; return; }
+    if (state.makeups.length === 0) { box.hidden = true; return; }
     box.hidden = false;
     box.innerHTML = '';
+
     var strong = document.createElement('strong');
-    strong.textContent = '振替が1回分あります';
-    var p = document.createElement('p');
-    p.textContent =
-      formatDateJa(m.expiresAt) + 'まで有効です。次の回数券をお申込みの際に、' +
-      '1回分を追加でお選びいただけます（追加料金はかかりません）。';
+    strong.textContent = '振替があります';
     box.appendChild(strong);
-    box.appendChild(p);
+
+    state.makeups.forEach(function (m) {
+      var p = document.createElement('p');
+      p.textContent =
+        childNameOf(m.childId) + ' さん：' + formatDateJa(m.expiresAt) + 'まで有効。' +
+        'このお子様の次の回数券をお申込みの際に、1回分を追加でお選びいただけます' +
+        '（追加料金はかかりません）。';
+      box.appendChild(p);
+    });
   }
 
   function renderTickets(tickets) {
@@ -700,8 +726,8 @@
     chg.addEventListener('click', function () { openDayChange(r); });
     acts.appendChild(chg);
 
-    // 振替は1人1回まで。すでに持っているときは出さない。
-    if (!state.makeup) {
+    // 振替はお子様ごとに1回まで。そのお子様がすでに持っているときは出さない。
+    if (!makeupOf(detail.ticket.childId)) {
       var mk = document.createElement('button');
       mk.type = 'button';
       mk.className = 'btn btn-outline btn-sm';
@@ -817,7 +843,6 @@
       body: JSON.stringify({ slotId: r.slotId })
     })
       .then(function (d) {
-        state.makeup = { expiresAt: d.expiresAt };
         window.alert('振替にまわしました。' + formatDateJa(d.expiresAt) + 'まで有効です。');
         openDetail(detail.ticket.ticketId);
       })
@@ -1129,15 +1154,7 @@
     });
     syncCourse();
 
-    var row = $('#bk-makeup-row');
-    if (state.makeup) {
-      row.hidden = false;
-      $('#bk-use-makeup').checked = false;
-      $('#bk-makeup-label').textContent =
-        '振替の1回分を使う（' + formatDateJa(state.makeup.expiresAt) + 'まで有効・追加料金なし）';
-    } else {
-      row.hidden = true;
-    }
+    syncMakeupRow();
 
     loadPurchaseOptions();
   }
@@ -1221,6 +1238,30 @@
    * 振替を持っている状態で8回券を買うと9日必要になり、開講日が
    * 足りずに申込を完了できなくなる。選ばせる前に落としておく。
    */
+  /**
+   * 「振替の1回分を使う」の出し分け。
+   * 振替はお子様ごとなので、選択中のお子様が持っているときだけ出す。
+   * 単発では使えない。
+   */
+  function syncMakeupRow() {
+    var child = selectedChild();
+    var m = child ? makeupOf(child.childId) : null;
+    var row = $('#bk-makeup-row');
+
+    if (!m || state.purchaseType === 'single') {
+      row.hidden = true;
+      if ($('#bk-use-makeup').checked) {
+        $('#bk-use-makeup').checked = false;
+        state.useMakeup = false;
+      }
+      return;
+    }
+
+    row.hidden = false;
+    $('#bk-makeup-label').textContent =
+      '振替の1回分を使う（' + formatDateJa(m.expiresAt) + 'まで有効・追加料金なし）';
+  }
+
   function syncTicketTypeLimit() {
     var extra = state.useMakeup ? 1 : 0;
     var avail = state.avail;
@@ -1338,6 +1379,7 @@
    * 保護者に選ばせる項目ではないので、結果と理由だけを示す。
    */
   function syncCourse() {
+    syncMakeupRow();
     var child = selectedChild();
     var info = $('#bk-course-info');
     state.ageClass = null;
@@ -1409,11 +1451,7 @@
     $('#bk-ticket-type-row').hidden = isSingle;
     $('#bk-single-count-row').hidden = !isSingle;
     // 振替は回数券のときだけ使える
-    $('#bk-makeup-row').hidden = isSingle || !state.makeup;
-    if (isSingle) {
-      $('#bk-use-makeup').checked = false;
-      state.useMakeup = false;
-    }
+    syncMakeupRow();
     syncTicketTypeLimit();
     state.ticketType = isSingle
       ? Number($('#bk-single-count').value)
@@ -1449,12 +1487,11 @@
       })
     })
       .then(function (d) {
-        // 振替を使って申し込んだ時点で権利は消費されている。
-        // マイページへ戻ったときに「振替が1回分あります」を出さない。
+        // 振替を使って申し込んだ時点で、そのお子様の権利は消費されている。
+        // マイページへ戻ったときに残って見えないよう、手元からも落とす。
         if (state.useMakeup) {
-          state.makeup = null;
+          dropMakeup(childId);
           state.useMakeup = false;
-          renderMakeup(null);
         }
         showReceipt(d);
       })
@@ -1480,8 +1517,6 @@
       ul.appendChild(li);
     });
 
-    // 振替を使っていれば消費済み
-    if (data.usedMakeup) state.makeup = null;
 
     var btn = $('#bk-submit');
     btn.disabled = false;
