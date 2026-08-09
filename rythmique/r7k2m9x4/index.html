@@ -295,6 +295,9 @@
                             <div class="bk-field">
                                 <label for="bk-start-month">ご利用を始める月</label>
                                 <select id="bk-start-month" class="bk-select"></select>
+                                <!-- 有効期間が重なる回数券をすでにお持ちの月は選べない。
+                                     理由を書かないと「なぜ選べないのか」が分からない。 -->
+                                <p class="bk-hint" id="bk-start-overlap" hidden></p>
                                 <p class="bk-hint" id="bk-start-hint"></p>
                             </div>
 

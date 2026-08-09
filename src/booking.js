@@ -50,6 +50,8 @@
     options: [],
     children: [],
     makeups: [],
+    // お手持ちの申込。開始月の重なり判定に使う。
+    tickets: [],
     editingChildId: '',
     addingChild: false,
     pendingQr: ''
@@ -277,6 +279,7 @@
       .then(function (d) {
         state.children = d.children || [];
         state.makeups = d.makeups || [];
+        state.tickets = d.tickets || [];
         renderChildren();
         renderMakeup();
         renderTickets(d.tickets || []);
@@ -1206,12 +1209,86 @@
           return;
         }
         sel.value = state.options[0].month;
+        syncStartMonthOptions();
         onStartMonthChange();
       })
       .catch(function () {
         status.textContent =
           '開講日を読み込めませんでした。通信環境をご確認のうえ、ページを再読み込みしてください。';
       });
+  }
+
+  /**
+   * その開始月が、お手持ちの回数券と有効期間で重なるか。
+   *
+   * 有効期間が重なる回数券は、お子様1人につき1枚まで（サーバー側で
+   * USER#<sub>/MONTH#<childId>#<YYYY-MM> により原子的に排除している）。
+   * ここはその先読みで、選ばせる前に落とすためのもの。
+   * 単発はこの対象外——開講日が足りない月を単発で埋める運用のため。
+   */
+  function overlappingTicket(childId, opt) {
+    if (!childId || state.purchaseType === 'single') return null;
+    for (var i = 0; i < state.tickets.length; i++) {
+      var t = state.tickets[i];
+      if (t.childId !== childId) continue;
+      if (t.status === 'cancelled') continue;
+      if (t.purchaseType !== 'ticket') continue;
+      // 期間が1日でも重なれば不可
+      if (opt.validFrom <= t.validTo && opt.validTo >= t.validFrom) return t;
+    }
+    return null;
+  }
+
+  /**
+   * 重なる開始月を選べないようにする。
+   *
+   * 以前は選べてしまい、申し込む段になって初めて弾かれていた。
+   * 日程まで選び終えてから断られるのは徒労なので、入口で落として理由を示す。
+   */
+  function syncStartMonthOptions() {
+    var child = selectedChild();
+    var sel = $('#bk-start-month');
+    var note = $('#bk-start-overlap');
+    var blocked = 0;
+
+    Array.prototype.forEach.call(sel.options, function (o) {
+      var opt = null;
+      for (var i = 0; i < state.options.length; i++) {
+        if (state.options[i].month === o.value) opt = state.options[i];
+      }
+      if (!opt) return;
+
+      var hit = child ? overlappingTicket(child.childId, opt) : null;
+      var label =
+        Number(o.value.slice(0, 4)) + '年' + Number(o.value.slice(5, 7)) + '月から';
+      o.disabled = !!hit;
+      o.textContent = hit ? label + '（お手持ちの回数券と期間が重なります）' : label;
+      if (hit) blocked++;
+    });
+
+    if (blocked === 0) {
+      note.hidden = true;
+    } else {
+      note.hidden = false;
+      note.textContent =
+        '※' + (child ? child.childName + ' さんは' : '') +
+        'すでにお持ちの回数券と有効期間が重なる月はお選びいただけません。' +
+        '回数券は有効期間が重ならないよう、お子様お一人につき1枚までとなります。' +
+        '同じ期間に追加で通われる場合は、単発レッスンをご利用ください。';
+      note.className = 'bk-hint bk-hint--warn';
+    }
+
+    // 選択中の月が選べなくなったら、選べる月へ寄せる
+    var cur = sel.selectedOptions[0];
+    if (cur && cur.disabled) {
+      var next = Array.prototype.filter.call(sel.options, function (o) {
+        return !o.disabled;
+      })[0];
+      if (next) {
+        sel.value = next.value;
+        onStartMonthChange();
+      }
+    }
   }
 
   function currentOption() {
@@ -1496,8 +1573,13 @@
       msg.className = 'bk-select-msg bk-select-msg--done';
     }
 
-    // 対象年齢外のときは金額が決まらないので送信させない
-    $('#bk-submit').disabled = got !== need || !state.ageClass;
+    // 対象年齢外のときは金額が決まらないので送信させない。
+    // 全ての月が重なって選べる月が無い場合もここで止める（選択肢を潰しただけでは
+    // 重なる月が選ばれたまま残るため）。
+    var child = selectedChild();
+    var opt = currentOption();
+    var overlap = child && opt ? overlappingTicket(child.childId, opt) : null;
+    $('#bk-submit').disabled = got !== need || !state.ageClass || !!overlap;
   }
 
   function resetSelection() {
@@ -1510,6 +1592,8 @@
     var isSingle = state.purchaseType === 'single';
     $('#bk-ticket-type-row').hidden = isSingle;
     $('#bk-single-count-row').hidden = !isSingle;
+    // 単発は期間の重なりの対象外なので、開始月の可否も切り替わる
+    syncStartMonthOptions();
     // 振替は回数券のときだけ使える
     syncMakeupRow();
     syncTicketTypeLimit();
@@ -1879,7 +1963,11 @@
 
     // 申込フォーム
     // コースの選択欄は廃止。料金区分はご登録の生年月日から決まる。
-    $('#bk-child-select').addEventListener('change', syncCourse);
+    // お子様が変わると、重なる開始月も変わる（回数券はお子様ごとに1枚まで）
+    $('#bk-child-select').addEventListener('change', function () {
+      syncStartMonthOptions();
+      syncCourse();
+    });
     Array.prototype.forEach.call(
       document.querySelectorAll('input[name=purchaseType]'),
       function (el) { el.addEventListener('change', onPurchaseTypeChange); }
