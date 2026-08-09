@@ -470,6 +470,12 @@
     return null;
   }
 
+  /* ご利用開始前かどうか。この時期は回数の変更で選び直せるので、
+     振替（お一人1回きりの救済）は使わせない。 */
+  function beforeStart(t) {
+    return !!t.validFrom && todayJst() < t.validFrom;
+  }
+
   /* 使い終わった振替を手元の一覧から落とす（表示のずれを防ぐ） */
   function dropMakeup(childId) {
     state.makeups = state.makeups.filter(function (m) { return m.childId !== childId; });
@@ -604,8 +610,10 @@
     [
       ['お名前', t.childName],
       ['料金区分', t.ageClass === 'age4_5' ? '4〜5歳' : '0〜3歳'],
+      // 振替の1回は回数券に含まれる回ではなく、別に足される1回。
+      // 「(振替1回を含む)」だと5回券が5回のうち1回が振替のように読めるので足し算で書く。
       ['内容', (t.purchaseType === 'single' ? '単発 ' + t.ticketType + '回' : t.ticketType + '回券') +
-        (t.usedMakeup ? '（振替1回を含む）' : '')],
+        (t.usedMakeup ? '＋振替1回' : '')],
       ['お支払い金額', formatYen(t.amount)],
       ['有効期間', t.validFrom + ' 〜 ' + t.validTo]
     ].forEach(function (r) {
@@ -644,6 +652,17 @@
     note.textContent =
       '※当日および過去の回は、こちらからは変更できません。お急ぎの場合は教室までご連絡ください。';
     box.appendChild(note);
+
+    // 「振替にまわす」を出していない理由を書いておく。
+    // ボタンが無い理由が分からないと、教室へのお問い合わせになってしまう。
+    if (beforeStart(t)) {
+      var mkNote = document.createElement('p');
+      mkNote.className = 'bk-hint';
+      mkNote.textContent =
+        '※ご利用開始前は「振替にまわす」をお使いいただけません。' +
+        '下の「回数の変更」で、回数と参加予定日を選び直していただけます。';
+      box.appendChild(mkNote);
+    }
 
     var planNote = document.createElement('p');
     planNote.className = 'bk-hint';
@@ -726,8 +745,11 @@
     chg.addEventListener('click', function () { openDayChange(r); });
     acts.appendChild(chg);
 
-    // 振替はお子様ごとに1回まで。そのお子様がすでに持っているときは出さない。
-    if (!makeupOf(detail.ticket.childId)) {
+    /* 押しても振替にまわせない場面ではボタンを出さない。
+       - そのお子様がすでに振替を持っている（お子様ごとに1回まで）
+       - まだご利用開始前（回数の変更で選び直せるので、そちらへ案内する）
+       押せるのに断られるより、最初から無いほうが迷わない。 */
+    if (!makeupOf(detail.ticket.childId) && !beforeStart(detail.ticket)) {
       var mk = document.createElement('button');
       mk.type = 'button';
       mk.className = 'btn btn-outline btn-sm';
@@ -819,7 +841,7 @@
        振替は「通えるはずだった回に行けなかった」ときの救済で、お一人1回しか
        使えない。開始前に使ってしまうと、本当に必要になったときに残らない。
        回数変更で足りる場面では、そちらへ案内する。 */
-    if (t.validFrom && todayJst() < t.validFrom) {
+    if (beforeStart(t)) {
       var toPlan = window.confirm(
         'この回数券はまだご利用開始前です（' + formatDateJa(t.validFrom) + '開始）。\n\n' +
         'この時期であれば「回数の変更」で回数と日程を選び直せます。\n' +
@@ -889,9 +911,11 @@
     options.forEach(function (n) {
       var o = document.createElement('option');
       o.value = n;
+      // 振替を使って買った券は、どの回数でも「回数券＋振替1回」通えるので
+      // 5回券だけでなく全ての選択肢に足し算で添える。
       o.textContent = t.purchaseType === 'single'
         ? n + '回'
-        : n + '回券' + (n === 5 ? '（振替1回を加えて6回）' : '');
+        : n + '回券' + (t.usedMakeup ? '＋振替1回' : '');
       if (n === t.ticketType) o.selected = true;
       sel.appendChild(o);
     });
@@ -1275,6 +1299,13 @@
       state.ticketType = 6;
       resetSelection();
     }
+
+    // 振替をお使いになるときは、どの回数券でも1回足される。
+    // マイページの表記（○回券＋振替1回）と揃える。
+    Array.prototype.forEach.call(
+      document.querySelectorAll('.bk-mk-note'),
+      function (el) { el.hidden = !state.useMakeup; }
+    );
 
     var current = null;
     var best = null;

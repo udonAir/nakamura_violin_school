@@ -255,21 +255,23 @@
                             <fieldset class="bk-fieldset" id="bk-ticket-type-row">
                                 <legend>回数券の種類</legend>
                                 <!-- 5回券は振替をお使いになるときだけ出す特例 -->
+                                <!-- bk-mk-note は「振替の1回分を使う」が入のときだけ出す。
+                                     出し入れは syncTicketTypeLimit() が行う。 -->
                                 <label class="bk-radio" id="bk-ticket5-row" hidden>
                                     <input type="radio" name="ticketType" value="5">
-                                    <span>5回券<small class="bk-note-inline">（振替1回を加えて6回になります）</small></span>
+                                    <span>5回券<small class="bk-note-inline bk-mk-note" hidden>＋振替1回</small></span>
                                 </label>
                                 <label class="bk-radio">
                                     <input type="radio" name="ticketType" value="6" checked>
-                                    <span>6回券</span>
+                                    <span>6回券<small class="bk-note-inline bk-mk-note" hidden>＋振替1回</small></span>
                                 </label>
                                 <label class="bk-radio">
                                     <input type="radio" name="ticketType" value="7">
-                                    <span>7回券</span>
+                                    <span>7回券<small class="bk-note-inline bk-mk-note" hidden>＋振替1回</small></span>
                                 </label>
                                 <label class="bk-radio">
                                     <input type="radio" name="ticketType" value="8">
-                                    <span>8回券</span>
+                                    <span>8回券<small class="bk-note-inline bk-mk-note" hidden>＋振替1回</small></span>
                                 </label>
                             </fieldset>
 
