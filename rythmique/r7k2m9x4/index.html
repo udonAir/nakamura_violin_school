@@ -240,6 +240,18 @@
                                  保護者が選ぶ項目ではないので、結果だけを示す。 -->
                             <p id="bk-course-info" class="bk-mailnote" hidden></p>
 
+                            <!-- 開始月は種類より先に決めていただく。
+                                 選べる回数（開講日の残り）も、期間の重なりの判定も、
+                                 開始月が決まってはじめて定まるため。 -->
+                            <div class="bk-field">
+                                <label for="bk-start-month">ご利用を始める月</label>
+                                <select id="bk-start-month" class="bk-select"></select>
+                                <!-- 有効期間が重なる回数券をすでにお持ちの月は選べない。
+                                     理由を書かないと「なぜ選べないのか」が分からない。 -->
+                                <p class="bk-hint" id="bk-start-overlap" hidden></p>
+                                <p class="bk-hint" id="bk-start-hint"></p>
+                            </div>
+
                             <fieldset class="bk-fieldset">
                                 <legend>お申込みの種類</legend>
                                 <label class="bk-radio">
@@ -291,15 +303,6 @@
                                     <option value="3">3回</option>
                                 </select>
                             </fieldset>
-
-                            <div class="bk-field">
-                                <label for="bk-start-month">ご利用を始める月</label>
-                                <select id="bk-start-month" class="bk-select"></select>
-                                <!-- 有効期間が重なる回数券をすでにお持ちの月は選べない。
-                                     理由を書かないと「なぜ選べないのか」が分からない。 -->
-                                <p class="bk-hint" id="bk-start-overlap" hidden></p>
-                                <p class="bk-hint" id="bk-start-hint"></p>
-                            </div>
 
                         </div>
 

@@ -2526,6 +2526,9 @@ ul {
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--white);
+  /* select は幅を指定しないと最も長い選択肢に合わせて広がり、枠をはみ出す。
+     選択肢の文字は折り返せないので、幅の側で止める。 */
+  max-width: 100%;
 }
 
 .bk-summary {

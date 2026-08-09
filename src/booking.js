@@ -1261,8 +1261,10 @@
       var hit = child ? overlappingTicket(child.childId, opt) : null;
       var label =
         Number(o.value.slice(0, 4)) + '年' + Number(o.value.slice(5, 7)) + '月から';
+      // select の選択肢は折り返せない。長くすると枠をはみ出すので、
+      // ここは短く印だけ付け、理由は下の bk-start-overlap に書く。
       o.disabled = !!hit;
-      o.textContent = hit ? label + '（お手持ちの回数券と期間が重なります）' : label;
+      o.textContent = hit ? label + '（選択不可）' : label;
       if (hit) blocked++;
     });
 
