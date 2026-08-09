@@ -252,6 +252,14 @@
                                 </label>
                             </fieldset>
 
+                            <!-- 振替は回数券の選択肢そのものを書き換える（5回券の出現・
+                                 必要な参加予定日が回数＋1になる）ので、種類より前に置く。 -->
+                            <label class="bk-check" id="bk-makeup-row" hidden>
+                                <input type="checkbox" id="bk-use-makeup">
+                                <span id="bk-makeup-label"></span>
+                            </label>
+                            <p class="bk-hint" id="bk-makeup-hint" hidden></p>
+
                             <fieldset class="bk-fieldset" id="bk-ticket-type-row">
                                 <legend>回数券の種類</legend>
                                 <!-- 5回券は振替をお使いになるときだけ出す特例 -->
@@ -274,11 +282,6 @@
                                     <span>8回券<small class="bk-note-inline bk-mk-note" hidden>＋振替1回</small></span>
                                 </label>
                             </fieldset>
-
-                            <label class="bk-check" id="bk-makeup-row" hidden>
-                                <input type="checkbox" id="bk-use-makeup">
-                                <span id="bk-makeup-label"></span>
-                            </label>
 
                             <fieldset class="bk-fieldset" id="bk-single-count-row" hidden>
                                 <legend>回数</legend>

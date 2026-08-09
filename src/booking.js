@@ -44,6 +44,8 @@
     validFrom: '',
     validTo: '',
     useMakeup: false,
+    // 既定でチェックを入れたお子様。切り替えたときだけ入れ直すための目印。
+    makeupDefaultedFor: null,
     avail: 0,
     options: [],
     children: [],
@@ -1271,19 +1273,46 @@
     var child = selectedChild();
     var m = child ? makeupOf(child.childId) : null;
     var row = $('#bk-makeup-row');
+    var hint = $('#bk-makeup-hint');
+    var before = state.useMakeup;
 
     if (!m || state.purchaseType === 'single') {
       row.hidden = true;
-      if ($('#bk-use-makeup').checked) {
-        $('#bk-use-makeup').checked = false;
-        state.useMakeup = false;
-      }
+      hint.hidden = true;
+      $('#bk-use-makeup').checked = false;
+      state.useMakeup = false;
+      state.makeupDefaultedFor = null;
+      if (before) afterMakeupChange();
       return;
     }
 
     row.hidden = false;
     $('#bk-makeup-label').textContent =
       '振替の1回分を使う（' + formatDateJa(m.expiresAt) + 'まで有効・追加料金なし）';
+
+    /* 既定は「使う」。無料の1回を取り逃すほうが損が大きいため。
+       強制はしない——振替の1回分も参加予定日を選ぶ対象なので、開講日が
+       少ない期間では回数の選択肢が全滅し、申込そのものができなくなる。
+       お子様が変わったときだけ入れ直す。保護者が外したのを毎回戻さないため。 */
+    if (state.makeupDefaultedFor !== child.childId) {
+      state.makeupDefaultedFor = child.childId;
+      $('#bk-use-makeup').checked = true;
+      state.useMakeup = true;
+    }
+
+    // 外したときに「捨てた」と誤解されないよう、次回以降に使えることを添える
+    hint.hidden = state.useMakeup;
+    hint.textContent =
+      '※外された場合、この振替は' + formatDateJa(m.expiresAt) +
+      'まで次回以降のお申込みにお使いいただけます。';
+
+    if (state.useMakeup !== before) afterMakeupChange();
+  }
+
+  /** 振替の使用が変わると必要な参加予定日の数が変わるので、選択肢と日程を引き直す */
+  function afterMakeupChange() {
+    syncTicketTypeLimit();
+    resetSelection();
   }
 
   function syncTicketTypeLimit() {
@@ -1871,8 +1900,8 @@
     $('#bk-start-month').addEventListener('change', onStartMonthChange);
     $('#bk-use-makeup').addEventListener('change', function () {
       state.useMakeup = this.checked;
-      syncTicketTypeLimit();
-      resetSelection();
+      $('#bk-makeup-hint').hidden = this.checked;
+      afterMakeupChange();
     });
     $('#bk-form').addEventListener('submit', onSubmit);
 
