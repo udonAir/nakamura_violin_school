@@ -88,9 +88,10 @@
                             </div>
                             <div class="bk-field">
                                 <label for="ad-new-part">時間枠</label>
+                                <!-- 後半枠（16:45-17:45）は運用をやめたので作れないようにしてある。
+                                     保護者側は part で絞っていないため、作ると予約できてしまう。 -->
                                 <select id="ad-new-part" class="bk-select">
-                                    <option value="first">前半 15:30〜16:30（0〜3歳）</option>
-                                    <option value="second">後半 16:45〜17:45（4〜5歳）</option>
+                                    <option value="first">15:30〜16:30</option>
                                 </select>
                             </div>
                             <div class="bk-field">

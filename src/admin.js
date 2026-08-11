@@ -182,9 +182,9 @@
       head.className = 'ad-slot-head';
 
       var title = document.createElement('strong');
+      // 時間帯と年齢の対応は無くなったので、コース名は出さない
       title.textContent =
-        formatDateJa(s.date) + ' ' + s.startTime + '〜' + s.endTime +
-        '（' + (s.part === 'first' ? '0〜3歳' : '4〜5歳') + '）';
+        formatDateJa(s.date) + ' ' + s.startTime + '〜' + s.endTime;
       head.appendChild(title);
 
       var count = document.createElement('span');
