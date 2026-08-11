@@ -369,22 +369,33 @@
 
   /* ===== 申込一覧 ===== */
 
+  /* 取得した申込を持っておき、表示は絞り込みで切り替える */
+  var allTickets = [];
+
   function loadTickets() {
     var box = $('#ad-tickets');
     box.textContent = '読み込んでいます…';
     api('/admin/tickets')
-      .then(function (d) { renderTickets(d.tickets || []); })
+      .then(function (d) { allTickets = d.tickets || []; renderTickets(); })
       .catch(function (e) { box.textContent = e.message; });
   }
 
-  function renderTickets(tickets) {
+  function renderTickets() {
     var box = $('#ad-tickets');
     box.innerHTML = '';
 
-    $('#ad-ticket-count').textContent = tickets.length + '件';
+    // 取消済みは既定で伏せる。普段見たいのは有効な申込だけなので。
+    var showCancelled = $('#ad-show-cancelled').checked;
+    var tickets = showCancelled
+      ? allTickets
+      : allTickets.filter(function (t) { return t.status !== 'cancelled'; });
+
+    var hidden = allTickets.length - tickets.length;
+    $('#ad-ticket-count').textContent =
+      tickets.length + '件' + (hidden > 0 ? '（取消 ' + hidden + '件を非表示）' : '');
 
     if (tickets.length === 0) {
-      box.innerHTML = '<p class="bk-hint">まだお申込みはありません。</p>';
+      box.innerHTML = '<p class="bk-hint">表示できるお申込みはありません。</p>';
       return;
     }
 
@@ -462,7 +473,23 @@
             t.childName + ' さんのお申込みを取り消します。\n' +
             'これからの回の席は空きに戻ります。よろしいですか？'
           )) return;
-          cancelTicket(t.ticketId);
+          setTicketStatus(t.ticketId, 'cancelled');
+        }));
+      } else {
+        acts.appendChild(btn('取消を取り消す', function () {
+          if (!window.confirm(
+            t.childName + ' さんのお申込みを元に戻します。\n' +
+            'これからの回の席を取り直します。満席になっていると戻せません。\n' +
+            'よろしいですか？'
+          )) return;
+          setTicketStatus(t.ticketId, 'active');
+        }));
+        acts.appendChild(btn('完全に削除', function () {
+          if (!window.confirm(
+            t.childName + ' さんの取消済みのお申込みを完全に削除します。\n' +
+            '出席の記録も含めて消え、元に戻せません。よろしいですか？'
+          )) return;
+          removeTicket(t.ticketId);
         }));
       }
       card.appendChild(acts);
@@ -471,11 +498,19 @@
     });
   }
 
-  function cancelTicket(ticketId) {
+  /** 取消（cancelled）と、その取り消し（active） */
+  function setTicketStatus(ticketId, status) {
     api('/admin/tickets/' + encodeURIComponent(ticketId), {
       method: 'PATCH',
-      body: JSON.stringify({ status: 'cancelled' })
+      body: JSON.stringify({ status: status })
     })
+      .then(function () { loadTickets(); loadSlots(); })
+      .catch(function (e) { alert(e.message); });
+  }
+
+  /** 取消済みの申込を完全に削除する */
+  function removeTicket(ticketId) {
+    api('/admin/tickets/' + encodeURIComponent(ticketId), { method: 'DELETE' })
       .then(function () { loadTickets(); loadSlots(); })
       .catch(function (e) { alert(e.message); });
   }
@@ -550,6 +585,8 @@
     $('#ad-reload').addEventListener('click', function () { loadSlots(); loadTickets(); });
     $('#ad-add-form').addEventListener('submit', onAddSlot);
     $('#ad-export').addEventListener('click', exportCsv);
+    // 取得済みの一覧を出し分けるだけなので、読み込み直さない
+    $('#ad-show-cancelled').addEventListener('change', renderTickets);
 
     // タブ切り替え
     Array.prototype.forEach.call(document.querySelectorAll('.ad-tab'), function (t) {
