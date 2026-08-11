@@ -907,7 +907,12 @@
 
     editor.innerHTML =
       '<div class="bk-field"><label for="bk-edit-type">回数</label>' +
-      '<select id="bk-edit-type" class="bk-select"></select></div>' +
+      '<select id="bk-edit-type" class="bk-select"></select>' +
+      (t.usedMakeup
+        ? '<p class="bk-hint">このお申込みは振替の1回分を含みます。' +
+          '参加予定日は回数券の回数に1日を足した日数をお選びください。</p>'
+        : '') +
+      '</div>' +
       '<div class="bk-summary"><span>選択中 <strong id="bk-edit-count"></strong></span>' +
       '<span>お支払い予定 <strong id="bk-edit-amount"></strong></span></div>' +
       '<p class="bk-pay-note">お支払いは初回レッスン時に現金でお支払いをお願いします</p>' +
@@ -930,7 +935,7 @@
       // 5回券だけでなく全ての選択肢に足し算で添える。
       o.textContent = t.purchaseType === 'single'
         ? n + '回'
-        : n + '回券' + (t.usedMakeup ? '＋振替1回' : '');
+        : n + '回券' + (t.usedMakeup ? '＋振替1回（計' + (n + 1) + '日）' : '');
       if (n === t.ticketType) o.selected = true;
       sel.appendChild(o);
     });
