@@ -556,6 +556,13 @@
       });
       card.appendChild(dates);
 
+      // カード全体が押せることが見た目から分からなかったので、
+      // 何ができるのかを言葉で出す。
+      var go = document.createElement('div');
+      go.className = 'bk-ticket-go';
+      go.textContent = 'お申込み内容の確認・変更 →';
+      card.appendChild(go);
+
       card.addEventListener('click', function () { openDetail(t.ticketId); });
       box.appendChild(card);
     });
@@ -1172,6 +1179,9 @@
     showPane('bk-form-section');
     state.selected = [];
     state.useMakeup = false;
+    // 前回の申込で入力した内容が残らないようにする
+    $('#bk-note').value = '';
+    $('#bk-error').textContent = '';
 
     var sel = $('#bk-child-select');
     sel.innerHTML = '';

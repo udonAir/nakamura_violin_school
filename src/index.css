@@ -3164,6 +3164,17 @@ ul {
   color: var(--charcoal-light);
 }
 
+/* 申込カードが押せることを言葉で示す行 */
+.bk-ticket-go {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--uguisu);
+  text-align: right;
+}
+
 /* 変更の操作枠。お申込み内容の枠と区別が付くよう、地色を少し変える。 */
 .bk-panel--edit {
   background: #fdfaf7;
