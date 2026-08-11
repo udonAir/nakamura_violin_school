@@ -2414,25 +2414,6 @@ ul {
 /* ==============================
    BOOKING FORM (限定公開ページ)
    ============================== */
-.bk-notice {
-  background: var(--bg-alt);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 20px 24px;
-  margin-bottom: 32px;
-}
-
-.bk-notice strong {
-  display: block;
-  font-family: var(--font-serif);
-  margin-bottom: 8px;
-}
-
-.bk-notice p {
-  font-size: 0.875rem;
-  margin-bottom: 14px;
-}
-
 .bk-panel {
   background: var(--white);
   border: 1px solid var(--border);

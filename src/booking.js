@@ -8,9 +8,6 @@
      cdk deploy の出力 GuardianUserPoolClientId をここに入れる。 */
   var CLIENT_ID = '2p03doec46lnt3leoha31nqf5v';
 
-  var TRIAL_FORM_URL =
-    'https://docs.google.com/forms/d/1D1GHXF9IeXEmMy0lBG19rGpgoC9d2AB9rEwnRlm72jE/viewform';
-
   /* 5回券は振替をお使いになるときだけの特例。
      5回分＋振替1回で6回になり、6回券と同じ通い方になる。
      サーバー側の TICKET_PRICES と揃えること。 */
@@ -1933,8 +1930,6 @@
   /* ===== 初期化 ===== */
 
   document.addEventListener('DOMContentLoaded', function () {
-    $('#bk-trial-link').href = TRIAL_FORM_URL;
-
     var params = new URLSearchParams(location.search);
     state.pendingQr = params.get('qr') || '';
 
