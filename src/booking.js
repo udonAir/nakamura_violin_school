@@ -519,6 +519,12 @@
     box.innerHTML = '';
 
     var live = tickets.filter(function (t) { return t.status !== 'cancelled'; });
+
+    // すでに申込がある状態で「レッスンの予約をする」とだけ出ていると、
+    // 済ませたはずの申込がまだ終わっていないように読める。
+    $('#bk-new').textContent =
+      live.length === 0 ? 'レッスンの予約をする' : '追加でレッスンの予約をする';
+
     if (live.length === 0) {
       box.innerHTML = '<p class="bk-hint">まだお申込みはありません。</p>';
       return;
