@@ -1259,13 +1259,12 @@
    * 重なる開始月を選べないようにする。
    *
    * 以前は選べてしまい、申し込む段になって初めて弾かれていた。
-   * 日程まで選び終えてから断られるのは徒労なので、入口で落として理由を示す。
+   * 日程まで選び終えてから断られるのは徒労なので、入口で落とす。
+   * 選択肢に「（選択不可）」と出るので、別途の説明文は置かない。
    */
   function syncStartMonthOptions() {
     var child = selectedChild();
     var sel = $('#bk-start-month');
-    var note = $('#bk-start-overlap');
-    var blocked = 0;
 
     Array.prototype.forEach.call(sel.options, function (o) {
       var opt = null;
@@ -1277,24 +1276,10 @@
       var hit = child ? overlappingTicket(child.childId, opt) : null;
       var label =
         Number(o.value.slice(0, 4)) + '年' + Number(o.value.slice(5, 7)) + '月から';
-      // select の選択肢は折り返せない。長くすると枠をはみ出すので、
-      // ここは短く印だけ付け、理由は下の bk-start-overlap に書く。
+      // select の選択肢は折り返せないので、印だけを短く付ける
       o.disabled = !!hit;
       o.textContent = hit ? label + '（選択不可）' : label;
-      if (hit) blocked++;
     });
-
-    if (blocked === 0) {
-      note.hidden = true;
-    } else {
-      note.hidden = false;
-      note.textContent =
-        '※' + (child ? child.childName + ' さんは' : '') +
-        'すでにお持ちの回数券と有効期間が重なる月はお選びいただけません。' +
-        '回数券は有効期間が重ならないよう、お子様お一人につき1枚までとなります。' +
-        '同じ期間に追加で通われる場合は、単発レッスンをご利用ください。';
-      note.className = 'bk-hint bk-hint--warn';
-    }
 
     // 選択中の月が選べなくなったら、選べる月へ寄せる
     var cur = sel.selectedOptions[0];
