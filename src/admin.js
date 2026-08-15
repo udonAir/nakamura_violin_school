@@ -281,16 +281,27 @@
     if (a.status !== 'cancelled') {
       row.appendChild(btn('日を変更', function () { openMove(row, slot, a); }));
     }
-    // 当日の急病などで来られなかった方に、教室から振替を付与する
-    if (a.status === 'absent') {
+    /* 振替の付与。当日の急病でも、これからの回の取り下げでも、教室はいつでも押せる。
+       これからの「予定」の回に押した場合はサーバー側が席も戻す（保護者の
+       「振替にまわす」と同じ扱い）。終わった回では席は戻らず、名簿に残る。 */
+    if (a.status !== 'cancelled') {
+      var willRelease = a.status === 'scheduled' && slot.date >= todayJst();
       row.appendChild(
         btn('振替を付与', function () {
-          if (!window.confirm(a.childName + ' さんに振替を1回付与します。よろしいですか？')) return;
+          if (!window.confirm(
+            a.childName + ' さんに振替を1回付与します。' +
+            (willRelease ? 'この日の予約は取り下げ、空きを1つ戻します。' : '') +
+            'よろしいですか？'
+          )) return;
           api('/admin/makeups', {
             method: 'POST',
-            body: JSON.stringify({ ticketId: a.ticketId, date: slot.date })
+            body: JSON.stringify({ ticketId: a.ticketId, slotId: a.slotId, date: slot.date })
           })
-            .then(function (d) { alert('振替を付与しました。' + d.expiresAt + ' まで有効です。'); })
+            .then(function (d) {
+              alert('振替を付与しました。' + d.expiresAt + ' まで有効です。' +
+                (d.released ? '\nこの日の予約は取り下げました。' : ''));
+              loadSlots();
+            })
             .catch(function (e) { alert(e.message); });
         })
       );
