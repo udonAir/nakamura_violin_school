@@ -758,12 +758,16 @@
     var acts = document.createElement('span');
     acts.className = 'bk-res-acts';
 
-    var chg = document.createElement('button');
-    chg.type = 'button';
-    chg.className = 'btn btn-outline btn-sm';
-    chg.textContent = '日を変更';
-    chg.addEventListener('click', function () { openDayChange(r); });
-    acts.appendChild(chg);
+    /* 振替ボタンと同じ考えで、差し替え先の開講日が1つも無いなら出さない。
+       押しても「空いている開講日がありません」としか出せないため。 */
+    if (dayChangeCandidates().length > 0) {
+      var chg = document.createElement('button');
+      chg.type = 'button';
+      chg.className = 'btn btn-outline btn-sm';
+      chg.textContent = '日を変更';
+      chg.addEventListener('click', function () { openDayChange(r); });
+      acts.appendChild(chg);
+    }
 
     /* 押しても振替にまわせない場面ではボタンを出さない。
        - そのお子様がすでに振替を持っている（お子様ごとに1回まで）
@@ -782,15 +786,20 @@
     return row;
   }
 
-  /** 1日だけ差し替える */
-  function openDayChange(r) {
+  /** 差し替え先に選べる開講日。ボタンを出すかの判定と中身の描画で共用する */
+  function dayChangeCandidates() {
     var today = todayJst();
     var taken = detail.ticket.reservations.map(function (x) { return x.slotId; });
 
     // コースをまたぐ変更も認めているので、時間枠では絞らない
-    var candidates = state.allSlots.filter(function (s) {
+    return state.allSlots.filter(function (s) {
       return s.status === 'open' && !s.full && s.date > today && taken.indexOf(s.slotId) < 0;
     });
+  }
+
+  /** 1日だけ差し替える */
+  function openDayChange(r) {
+    var candidates = dayChangeCandidates();
 
     var editor = openEditor(formatDateJa(r.date) + ' の参加日を変更');
 
@@ -850,7 +859,6 @@
         });
     });
     editor.appendChild(go);
-    $('#bk-editor-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   /** 振替にまわす */
