@@ -724,7 +724,12 @@
   function openEditor(title) {
     $('#bk-editor-head').textContent = title;
     $('#bk-editor').innerHTML = '';
-    $('#bk-editor-panel').hidden = false;
+    var panel = $('#bk-editor-panel');
+    panel.hidden = false;
+    // 中身を組み立て終わってから移動する（この関数の戻り値に追記していくため）
+    requestAnimationFrame(function () {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
     return $('#bk-editor');
   }
 
