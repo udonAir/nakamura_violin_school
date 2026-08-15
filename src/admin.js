@@ -276,6 +276,11 @@
         })
       );
     }
+    /* 日程の差し替え。保護者側は前日までだが、教室からは当日・過去の回も動かせる。
+       電話で受けた当日の変更を記録できないと、名簿が実態と合わなくなるため。 */
+    if (a.status !== 'cancelled') {
+      row.appendChild(btn('日を変更', function () { openMove(row, slot, a); }));
+    }
     // 当日の急病などで来られなかった方に、教室から振替を付与する
     if (a.status === 'absent') {
       row.appendChild(
@@ -292,6 +297,87 @@
     }
 
     return row;
+  }
+
+  /** 回数券の有効期間にかかる月の一覧。差し替え先の候補を集めるのに使う。 */
+  function monthsBetween(from, to) {
+    var out = [];
+    var y = Number(from.slice(0, 4));
+    var m = Number(from.slice(5, 7));
+    var last = to.slice(0, 7);
+    for (var i = 0; i < 12; i++) {
+      var cur = y + '-' + pad(m);
+      out.push(cur);
+      if (cur >= last) break;
+      m++;
+      if (m > 12) { m = 1; y++; }
+    }
+    return out;
+  }
+
+  /**
+   * 差し替え先を選ぶ小さなパネルを行の下に出す。
+   * 候補はその申込の有効期間内の開講日で、満席・受付停止の枠と、
+   * すでに本人が予約している日は外す（サーバー側でも同じ条件を見ている）。
+   */
+  function openMove(row, slot, a) {
+    var old = row.querySelector('.ad-move');
+    if (old) { old.remove(); return; }
+
+    var panel = document.createElement('div');
+    panel.className = 'ad-move';
+    panel.textContent = '開講日を読み込んでいます…';
+    row.appendChild(panel);
+
+    // 有効期間が分からない古いデータは、表示中の月だけを候補にする
+    var months = a.validFrom && a.validTo
+      ? monthsBetween(a.validFrom, a.validTo)
+      : [slot.date.slice(0, 7)];
+
+    Promise.all(months.map(function (m) { return api('/admin/slots?month=' + m); }))
+      .then(function (results) {
+        var taken = {};
+        var candidates = [];
+        results.forEach(function (d) {
+          (d.slots || []).forEach(function (s) {
+            var mine = (s.attendees || []).some(function (x) { return x.ticketId === a.ticketId; });
+            if (mine) taken[s.slotId] = true;
+            if (s.status === 'open' && s.reservedCount < s.capacity && !mine) candidates.push(s);
+          });
+        });
+
+        panel.innerHTML = '';
+        if (candidates.length === 0) {
+          panel.textContent = '有効期間内に空いている開講日がありません。振替の付与をご検討ください。';
+          return;
+        }
+
+        var sel = document.createElement('select');
+        sel.className = 'bk-select';
+        candidates.forEach(function (s) {
+          var o = document.createElement('option');
+          o.value = s.slotId;
+          o.textContent = formatDateJa(s.date) + ' ' + s.startTime + '〜' + s.endTime +
+            '（' + s.reservedCount + '/' + s.capacity + '名）';
+          sel.appendChild(o);
+        });
+        panel.appendChild(sel);
+
+        panel.appendChild(btn('この日に移す', function () {
+          moveReservation(a.ticketId, a.slotId, sel.value);
+        }));
+        panel.appendChild(btn('やめる', function () { panel.remove(); }));
+      })
+      .catch(function (e) { panel.textContent = e.message; });
+  }
+
+  function moveReservation(ticketId, fromSlotId, toSlotId) {
+    api(
+      '/admin/reservations/' + encodeURIComponent(ticketId) + '/' + encodeURIComponent(fromSlotId),
+      { method: 'PATCH', body: JSON.stringify({ toSlotId: toSlotId }) }
+    )
+      .then(loadSlots)
+      .catch(function (e) { alert(e.message); });
   }
 
   function patchReservation(ticketId, slotId, status) {
