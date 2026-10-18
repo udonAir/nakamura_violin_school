@@ -2268,6 +2268,71 @@ ul {
   box-shadow: var(--shadow);
 }
 
+/* 開講予定日（リトミック） */
+.lesson-schedule {
+  margin-top: 40px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 32px;
+  box-shadow: var(--shadow);
+}
+
+.lesson-schedule-title {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.lesson-schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 24px;
+}
+
+.lesson-schedule-month h4 {
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  color: var(--uguisu);
+  margin-bottom: 8px;
+}
+
+.lesson-schedule-month ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.lesson-schedule-month li {
+  font-size: 0.9rem;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.lesson-schedule-month li.is-cancelled {
+  color: var(--text-sub);
+  text-decoration: line-through;
+}
+
+.lesson-schedule-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  font-size: 0.68rem;
+  background: var(--greige);
+  color: var(--charcoal-light);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+}
+
+@media (max-width: 640px) {
+  .lesson-schedule {
+    padding: 24px 20px;
+  }
+}
+
 .course-plan-card--coming {
   opacity: 0.65;
 }

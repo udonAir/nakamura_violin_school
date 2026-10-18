@@ -222,6 +222,13 @@
 
             <p class="modal-note reveal">※別途、入会金として一律1,000円をいただきます。<br>
                 ※回数券のご購入時に、3ヶ月分の参加予定日をご記入のうえご提出ください。</p>
+
+            <!-- 開講予定日: 予約APIの /slots から main.js が描画する。取得できなければ非表示のまま -->
+            <div class="lesson-schedule" id="lesson-schedule" hidden>
+                <h3 class="lesson-schedule-title">今後の開講予定日</h3>
+                <div class="lesson-schedule-grid" id="lesson-schedule-list"></div>
+                <p class="modal-note">※予定は変更になる場合があります。</p>
+            </div>
         </div>
     </section>
 

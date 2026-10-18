@@ -57,6 +57,71 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(hideBlog);
 
+    // Rythmique: 予約APIの公開エンドポイントから今後3か月分の開講日を表示する
+    // API_BASE は src/booking.js と同じ値（APIを作り直したら両方更新する）
+    const scheduleBox = document.getElementById('lesson-schedule');
+    const scheduleList = document.getElementById('lesson-schedule-list');
+
+    if (scheduleBox && scheduleList) {
+        const API_BASE = 'https://tkokeft78i.execute-api.ap-northeast-1.amazonaws.com';
+        const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+
+        // 日付の判定は日本時間で行う
+        const todayJst = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+        const monthOffset = (ym, n) => {
+            const [y, m] = ym.split('-').map(Number);
+            const d = new Date(Date.UTC(y, m - 1 + n, 1));
+            return d.toISOString().slice(0, 7);
+        };
+        const from = todayJst.slice(0, 7);
+        const to = monthOffset(from, 2);
+
+        fetch(`${API_BASE}/slots?from=${from}&to=${to}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                const slots = ((data && data.slots) || [])
+                    .filter(s => s.status !== 'closed' && s.date >= todayJst);
+                if (slots.length === 0) return;
+
+                const byMonth = new Map();
+                slots.forEach(s => {
+                    const key = s.date.slice(0, 7);
+                    if (!byMonth.has(key)) byMonth.set(key, []);
+                    byMonth.get(key).push(s);
+                });
+
+                byMonth.forEach((items, ym) => {
+                    const [y, m] = ym.split('-').map(Number);
+                    const col = document.createElement('div');
+                    col.className = 'lesson-schedule-month';
+
+                    const head = document.createElement('h4');
+                    head.textContent = `${y}年${m}月`;
+                    col.appendChild(head);
+
+                    const ul = document.createElement('ul');
+                    items.forEach(s => {
+                        const [, mm, dd] = s.date.split('-').map(Number);
+                        const wd = WEEKDAYS[new Date(Date.UTC(y, mm - 1, dd)).getUTCDay()];
+                        const li = document.createElement('li');
+                        li.textContent = `${mm}/${dd}（${wd}）${s.startTime}〜${s.endTime}`;
+                        if (s.status === 'cancelled') {
+                            li.classList.add('is-cancelled');
+                            li.insertAdjacentHTML('beforeend', '<span class="lesson-schedule-tag">休講</span>');
+                        } else if (s.full) {
+                            li.insertAdjacentHTML('beforeend', '<span class="lesson-schedule-tag">満席</span>');
+                        }
+                        ul.appendChild(li);
+                    });
+                    col.appendChild(ul);
+                    scheduleList.appendChild(col);
+                });
+
+                scheduleBox.hidden = false;
+            })
+            .catch(() => { /* 取得できなければ非表示のまま */ });
+    }
+
     // Mobile Navigation Toggle
     const navToggle = document.querySelector('.mobile-nav-toggle');
     const mainNav = document.getElementById('main-nav');
