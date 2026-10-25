@@ -269,6 +269,17 @@
     st.textContent = RES_LABEL[a.status] || a.status;
     row.appendChild(st);
 
+    /* 振替の状況。サーバーはそのお子様が今持っている（まだ使っていない）振替を返す。
+       この回から付与したものか、別の回のものかで言い分ける。 */
+    var mk = a.makeup;
+    var mkHere = mk && mk.sourceTicketId === a.ticketId && mk.sourceDate === slot.date;
+    if (mk) {
+      var mt = document.createElement('span');
+      mt.className = 'ad-tag ad-tag--ok';
+      mt.textContent = (mkHere ? 'この回を振替済' : '振替保有中') + '（' + mk.expiresAt + 'まで）';
+      row.appendChild(mt);
+    }
+
     if (a.status !== 'cancelled') {
       row.appendChild(
         btn(a.status === 'attended' ? '出席を取消' : '出席にする', function () {
@@ -284,7 +295,8 @@
     /* 振替の付与。当日の急病でも、これからの回の取り下げでも、教室はいつでも押せる。
        これからの「予定」の回に押した場合はサーバー側が席も戻す（保護者の
        「振替にまわす」と同じ扱い）。終わった回では席は戻らず、名簿に残る。 */
-    if (a.status !== 'cancelled') {
+    // すでに振替を持っているお子様には付与できない（お子様ごとに1回まで）
+    if (a.status !== 'cancelled' && !mk) {
       var willRelease = a.status === 'scheduled' && slot.date >= todayJst();
       row.appendChild(
         btn('振替を付与', function () {
@@ -530,7 +542,15 @@
         ['内容', (t.purchaseType === 'single' ? '単発 ' : '') + t.ticketType + (t.purchaseType === 'single' ? '回' : '回券')],
         ['金額', formatYen(t.amount)],
         ['有効期間', t.validFrom + ' 〜 ' + t.validTo],
-        ['振替利用', t.usedMakeup ? 'あり（1回分を追加）' : 'なし'],
+        ['振替利用', t.usedMakeup
+          ? 'あり（1回分を追加' + (t.makeupSourceDate ? '・' + formatDateJa(t.makeupSourceDate) + 'の回の振替' : '') + '）'
+          : 'なし'],
+        // そのお子様が今持っている、まだ使っていない振替
+        ['振替保有', t.makeup
+          ? 'あり（' + (t.makeup.sourceDate ? formatDateJa(t.makeup.sourceDate) + 'の回・' : '') +
+            (t.makeup.grantedBy === 'teacher' ? '教室が付与・' : t.makeup.grantedBy === 'guardian' ? '保護者が振替・' : '') +
+            t.makeup.expiresAt + 'まで有効）'
+          : 'なし'],
         ['生年月日', t.birthDate || '—'],
         ['現在の年齢', t.birthDate ? ageOn(t.birthDate, todayJst()) + '歳' : '—'],
         ['メール', t.email],
